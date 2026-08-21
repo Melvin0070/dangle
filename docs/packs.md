@@ -17,7 +17,7 @@ Pack** — no rebuild needed (hotkey changes apply on next launch).
 
 ```jsonc
 {
-  "name": "Farewell",              // shown nowhere yet; names the pack
+  "name": "My Pack",               // shown nowhere yet; names the pack
   "charm": {
     "kind": "glyph3d",             // "glyph3d", "glass", or "emoji"
     "glyph": "</>",                // see docs/making-charms.md
@@ -54,5 +54,5 @@ DANGLE_BUNDLE_PACK=path/to/pack.json make app   # just the app
 make gift PACK=path/to/pack.json                # app + DMG, ready to hand over
 ```
 
-`Packs/farewell/` is a template with sample notes; copy it into
-`Packs/local/` (gitignored) before filling in real names and real words.
+Put your own packs in `Packs/local/` — it's gitignored, so custom names and
+notes never end up in a repository.

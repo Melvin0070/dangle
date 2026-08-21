@@ -18,8 +18,7 @@ clicks straight through.
 Dangle is an open-source *engine*: the charm, the thread, and the notes it
 shows all come from data. Three charms ship with the app — `</>`, Heart, and
 Four-Leaf Clover — and pick up whatever's published after that from the menu
-bar, no app update needed. Drop a `pack.json` in to turn it into a farewell
-gift or a team talisman.
+bar, no app update needed. Drop a `pack.json` in to make it yours.
 
 Inspired by (and in admiration of) Karthik Mahadevan's
 [Lucky Dangle](https://luckydangle.app) and Vercel's
@@ -135,22 +134,8 @@ A pack is one JSON file that fully describes what hangs from the screen and
 what it says: charm, thread, notes, hotkeys, timings. Choose **Edit Pack…**
 from the menu bar icon, edit, then **Reload Pack** — no rebuild needed.
 
-Full schema and examples in [docs/packs.md](docs/packs.md).
-
-### Give it as a gift
-
-The pack is what turns Dangle into a farewell present: collect notes from
-the team, put them in a pack, and build an app with the pack baked in:
-
-```bash
-cp -r Packs/farewell Packs/local/goodbye-ada   # start from the template
-$EDITOR Packs/local/goodbye-ada/pack.json      # real name, real notes
-make gift PACK=Packs/local/goodbye-ada/pack.json
-```
-
-That produces `dist/Dangle.dmg` with the pack bundled — hand it over, and
-every click of the charm says something kind. `Packs/local/` is gitignored,
-so the personal words never end up in a repository.
+Full schema and examples in [docs/packs.md](docs/packs.md). `make gift
+PACK=path/to/pack.json` builds `dist/Dangle.dmg` with a pack baked in.
 
 ## URL scheme
 
@@ -177,8 +162,8 @@ so the personal words never end up in a repository.
   (`make icon`) and physics diagnostics (`--windstats`).
 - [`Tests/DangleKitTests`](Tests/DangleKitTests) — physics invariants, pack
   and charm decoding, hotkey parsing (`make test`).
-- [`Packs/`](Packs) — `default/` ships in the app, `farewell/` is the gift
-  template.
+- [`Packs/`](Packs) — `default/` ships in the app; `local/` (gitignored) is
+  where your own packs go.
 - [`charms/`](charms) — the published charm catalog.
 
 ## Contributing

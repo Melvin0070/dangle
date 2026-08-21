@@ -188,8 +188,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// CharmStore, any emoji, and a way to get more. "Pack Charm" is not a
     /// separate category — it's a fallback item, shown only when the
     /// active pack's own charm isn't one already in that list (true for
-    /// the default and farewell packs, which both hang the bundled `</>`;
-    /// a bespoke pack with a charm of its own needs it).
+    /// the default pack, which hangs the bundled `</>`; a bespoke pack
+    /// with a charm of its own needs it).
     private func rebuildCharmMenu(_ menu: NSMenu) {
         menu.removeAllItems()
         let override = engine.charmOverrideID
