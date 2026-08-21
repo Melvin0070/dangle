@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.4
+
+- Redrew the `</>` charm: narrower, sharper `<`/`>` chevrons, a longer
+  center slash, and slightly thinner strokes overall.
+
 ## 0.2.3
 
 - All three charms — `</>`, Heart, Four-Leaf Clover — now install at first

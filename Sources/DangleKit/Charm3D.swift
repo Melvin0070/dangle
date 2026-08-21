@@ -143,10 +143,13 @@ public enum Charm3D {
         // Proportions: the slash runs taller than the chevrons (the classic
         // code-mark silhouette) and keeps clear air on both sides — its edge
         // never touches the chevron apexes. chevH:chevW controls the chevron
-        // angle — a smaller ratio reads as a narrower, more pointed V.
-        let chevH = s * 0.20
-        let chevW = s * 0.28
-        let thick = s * 0.15
+        // angle — a smaller ratio reads as a narrower, more pointed V. The
+        // slash's reach is set independently of chevH so it stays long
+        // regardless of how narrow the chevrons get.
+        let chevH = s * 0.16
+        let chevW = s * 0.34
+        let thick = s * 0.125
+        let slashHalf = s * 0.34
         let lx = -0.43 * s
         addCapsule(from: CGPoint(x: lx - chevW / 2, y: 0),
                    to: CGPoint(x: lx + chevW / 2, y: chevH), width: thick)
@@ -157,8 +160,8 @@ public enum Charm3D {
                    to: CGPoint(x: rx - chevW / 2, y: chevH), width: thick)
         addCapsule(from: CGPoint(x: rx + chevW / 2, y: 0),
                    to: CGPoint(x: rx - chevW / 2, y: -chevH), width: thick)
-        addCapsule(from: CGPoint(x: 0.115 * s, y: chevH * 1.4),
-                   to: CGPoint(x: -0.115 * s, y: -chevH * 1.4), width: thick * 0.88)
+        addCapsule(from: CGPoint(x: 0.115 * s, y: slashHalf),
+                   to: CGPoint(x: -0.115 * s, y: -slashHalf), width: thick * 0.88)
         let bezier = NSBezierPath(cgPath: combined)
         bezier.flatness = 0.05
         return bezier
