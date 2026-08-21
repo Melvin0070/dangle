@@ -28,10 +28,9 @@ crafted lucky charms with real rituals and stories, go buy Lucky Dangle.
 
 ## Install
 
-Download the latest `Dangle.dmg` from
-[Releases](https://github.com/Melvin0070/dangle/releases), drag Dangle to
-Applications, then **right-click → Open** the first time (builds are
-ad-hoc signed, not notarized). Or build it yourself:
+Builds are ad-hoc signed, not notarized, so the friendliest route is to
+build it yourself — an app you compile locally is never quarantined, and
+opens on a double-click with nothing to click through:
 
 ```bash
 git clone https://github.com/Melvin0070/dangle.git
@@ -40,6 +39,13 @@ make run
 ```
 
 Requires macOS 14+. Building needs only the Xcode Command Line Tools.
+
+Or download the latest `Dangle.dmg` from
+[Releases](https://github.com/Melvin0070/dangle/releases) and drag Dangle to
+Applications. macOS will refuse it the first time: open **System Settings →
+Privacy & Security**, find the message about Dangle, and click **Open
+Anyway**. (On macOS 14 the old right-click → Open shortcut still works;
+Apple removed it in 15.)
 
 ## Features
 
