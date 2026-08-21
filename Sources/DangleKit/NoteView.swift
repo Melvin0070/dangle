@@ -1,16 +1,12 @@
 import AppKit
 import QuartzCore
 
-/// A note beneath the charm: real macOS vibrancy, serif for the words,
-/// a monogram for the author, and a quiet counter.
+/// A note beneath the charm: real macOS vibrancy, serif for the words.
+/// Text only — no author, no counter.
 public final class NoteView: NSView {
 
     private let effect = NSVisualEffectView()
     private let quoteField = NSTextField(wrappingLabelWithString: "")
-    private let monogram = CATextLayer()
-    private let monogramBacking = CAGradientLayer()
-    private let fromField = NSTextField(labelWithString: "")
-    private let counterField = NSTextField(labelWithString: "")
 
     private static let maxTextWidth: CGFloat = 300
     private static let pad: CGFloat = 18
@@ -44,50 +40,22 @@ public final class NoteView: NSView {
         quoteField.preferredMaxLayoutWidth = Self.maxTextWidth
         effect.addSubview(quoteField)
 
-        monogramBacking.cornerRadius = 11
-        monogramBacking.startPoint = CGPoint(x: 0, y: 0)
-        monogramBacking.endPoint = CGPoint(x: 1, y: 1)
-        monogram.fontSize = 10
-        monogram.font = NSFont.systemFont(ofSize: 10, weight: .bold)
-        monogram.foregroundColor = NSColor.white.cgColor
-        monogram.alignmentMode = .center
-        monogram.contentsScale = 2
-        effect.layer?.addSublayer(monogramBacking)
-        effect.layer?.addSublayer(monogram)
-
-        fromField.font = .systemFont(ofSize: 12, weight: .medium)
-        fromField.textColor = NSColor.white.withAlphaComponent(0.62)
-        effect.addSubview(fromField)
-
-        counterField.font = .monospacedDigitSystemFont(ofSize: 10.5, weight: .regular)
-        counterField.textColor = NSColor.white.withAlphaComponent(0.34)
-        effect.addSubview(counterField)
-
         alphaValue = 0
         isHidden = true
     }
 
     required init?(coder: NSCoder) { fatalError() }
 
-    /// Lays out the note for the given content and returns its size.
+    /// Lays out the note for the given text and returns its size.
     @discardableResult
-    public func configure(note: DanglePack.Note, accent: NSColor,
-                          gradient: [NSColor], counter: String?) -> CGSize {
-        quoteField.stringValue = "\u{201C}\(note.text)\u{201D}"
-        fromField.stringValue = note.from
-        counterField.stringValue = counter ?? ""
-        monogram.string = String(note.from.prefix(1)).uppercased()
-        monogramBacking.colors = (gradient.count >= 2 ? gradient : [accent, accent])
-            .map(\.cgColor)
+    public func configure(text: String) -> CGSize {
+        quoteField.stringValue = "\u{201C}\(text)\u{201D}"
 
         let pad = Self.pad
         let quoteSize = quoteField.sizeThatFits(
             NSSize(width: Self.maxTextWidth, height: 500))
-        let fromSize = fromField.intrinsicContentSize
-        let width = max(quoteSize.width, fromSize.width + 30 + 80) + pad * 2
-        let height = quoteSize.height + 10 + 22 + pad * 2
-
-        let size = CGSize(width: ceil(width), height: ceil(height))
+        let size = CGSize(width: ceil(quoteSize.width) + pad * 2,
+                          height: ceil(quoteSize.height) + pad * 2)
         setFrameSize(size)
         effect.frame = bounds
         effect.maskImage = Self.roundedMask(radius: Self.cornerRadius)
@@ -96,15 +64,6 @@ public final class NoteView: NSView {
 
         quoteField.frame = NSRect(x: pad, y: pad,
                                   width: Self.maxTextWidth, height: quoteSize.height)
-        let rowY = pad + quoteSize.height + 10
-        monogramBacking.frame = CGRect(x: pad, y: rowY, width: 22, height: 22)
-        monogram.frame = CGRect(x: pad, y: rowY + 4.5, width: 22, height: 13)
-        fromField.frame = NSRect(x: pad + 30, y: rowY + 3,
-                                 width: fromSize.width + 4, height: fromSize.height)
-        let counterSize = counterField.intrinsicContentSize
-        counterField.frame = NSRect(x: size.width - pad - counterSize.width,
-                                    y: rowY + 5, width: counterSize.width,
-                                    height: counterSize.height)
         return size
     }
 

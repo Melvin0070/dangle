@@ -17,20 +17,25 @@ Charms…** — no app release involved.
     "gradientHexes": ["#2F9E44", "#69DB7C", "#B2F2BB"],
     "accentHex": "#2F9E44",
     "menuGlyph": "🍀"
-  }
+  },
+  "notes": [
+    "Luck finds the ones who keep showing up.",
+    "Give it a flick before anything that could use a little luck."
+  ]
 }
 ```
 
 | Field | Meaning |
 | --- | --- |
-| `id` | Stable, lowercase, unique across the catalog. Also the filename. |
+| `id` | Stable, lowercase, unique across the catalog. Also the filename. Letters, digits, and hyphens only, 64 chars max — it's used as a filename. |
 | `name` | What the Charm menu shows. |
 | `charm.kind` | `glyph3d` (extruded 3D), `glass` (gradient tile), or `emoji`. |
 | `charm.glyph` | What to hang — see below. |
 | `charm.size` | Points, default 96. |
-| `charm.gradientHexes` | Colors for rim reflections (3D), the tile gradient (glass), and note monograms. |
-| `charm.accentHex` | Accent for note monograms. |
+| `charm.gradientHexes` | Colors for rim reflections (3D) or the tile gradient (glass). |
+| `charm.accentHex` | Accent for the twin bead in the flat scene diagram. |
 | `charm.menuGlyph` | Emoji or short text for the menu bar while this charm hangs. |
+| `notes` | Optional. This charm's own notes — shown instead of the pack's while it hangs, text only. Omit to fall back to whatever pack the charm is hung on. |
 
 ## What can hang
 

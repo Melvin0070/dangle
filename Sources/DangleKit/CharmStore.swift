@@ -8,11 +8,15 @@ public struct Charm: Codable, Equatable {
     public var id: String
     public var name: String
     public var charm: DanglePack.CharmSpec
+    /// This charm's own notes, shown instead of the pack's while it hangs.
+    /// nil falls back to the pack's notes.
+    public var notes: [String]?
 
-    public init(id: String, name: String, charm: DanglePack.CharmSpec) {
+    public init(id: String, name: String, charm: DanglePack.CharmSpec, notes: [String]? = nil) {
         self.id = id
         self.name = name
         self.charm = charm
+        self.notes = notes
     }
 
     /// Ids double as filenames and URL components; keep them boring.

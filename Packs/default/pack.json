@@ -19,9 +19,9 @@
     "bless": "ctrl+opt+b"
   },
   "notes": [
-    { "text": "Click me for the next note. Drag me along the top edge to re-hang me anywhere.", "from": "Dangle" },
-    { "text": "⌃⌥D tucks me away and calls me back. ⌃⌥B blesses the moment.", "from": "Dangle" },
-    { "text": "Try: open \"dangle://bless\" — wire it into a deploy script or git hook.", "from": "Dangle" },
-    { "text": "Choose Edit Pack… from the menu bar to make these notes, the charm, and the thread yours.", "from": "Dangle" }
+    "Click me for the next note. Drag me along the top edge to re-hang me anywhere.",
+    "⌃⌥D tucks me away and calls me back. ⌃⌥B blesses the moment.",
+    "Try: open \"dangle://bless\" — wire it into a deploy script or git hook.",
+    "Choose Edit Pack… from the menu bar to make these notes, the charm, and the thread yours."
   ]
 }

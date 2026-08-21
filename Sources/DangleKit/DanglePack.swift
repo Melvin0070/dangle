@@ -7,7 +7,8 @@ public struct DanglePack: Codable, Equatable {
     public var name: String
     public var charm: CharmSpec
     public var thread: ThreadSpec
-    public var notes: [Note]
+    /// The words shown under the charm — text only, nothing else.
+    public var notes: [String]
     /// Seconds a note stays on screen.
     public var noteSeconds: Double
     /// Minutes between spontaneous notes. nil or <= 0 disables the timer.
@@ -28,7 +29,7 @@ public struct DanglePack: Codable, Equatable {
         public var size: Double?
         /// Motion-gradient colors for the glass tile, top-left to bottom-right.
         public var gradientHexes: [String]?
-        /// Accent used by notes, confetti, and the glow.
+        /// Accent used for the twin bead in the flat scene diagram.
         public var accentHex: String
         /// Emoji or short text shown in the menu bar while this charm hangs.
         public var menuGlyph: String?
@@ -37,11 +38,6 @@ public struct DanglePack: Codable, Equatable {
     public struct ThreadSpec: Codable, Equatable {
         public var colorHex: String
         public var width: Double
-    }
-
-    public struct Note: Codable, Equatable {
-        public var text: String
-        public var from: String
     }
 
     public var charmSize: CGFloat { CGFloat(charm.size ?? 96) }
@@ -84,7 +80,7 @@ public struct DanglePack: Codable, Equatable {
                          gradientHexes: ["#E8590C", "#FFB86B", "#FF5E78"],
                          accentHex: "#E8590C"),
         thread: ThreadSpec(colorHex: "#FFFFFF", width: 3),
-        notes: [Note(text: "Edit pack.json to make this yours.", from: "Dangle")],
+        notes: ["Edit pack.json to make this yours."],
         noteSeconds: 7,
         noteIntervalMinutes: nil,
         hotkeys: nil,

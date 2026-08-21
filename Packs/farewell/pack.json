@@ -19,12 +19,12 @@
     "bless": "ctrl+opt+b"
   },
   "notes": [
-    { "text": "Sample note — replace me in pack.json. Click the charm for the next one.", "from": "The Setup Crew" },
-    { "text": "You reviewed my first PR with forty comments and zero condescension. I still write code for that reviewer.", "from": "Sample · Platform" },
-    { "text": "Every system that didn't fall over this year is a love letter from you.", "from": "Sample · Infra" },
-    { "text": "Travel far, settle soft. The pipelines will hold. Probably.", "from": "Sample · ML" },
-    { "text": "Honest in the postmortem, kind in the hallway. Rare combination.", "from": "Sample · Product" },
-    { "text": "You taught me that 'I don't know yet' is a complete sentence.", "from": "Sample · New Grad" },
-    { "text": "Wherever you land, they're getting the best mentor we ever had.", "from": "Everyone" }
+    "Sample note — replace me in pack.json. Click the charm for the next one.",
+    "You reviewed my first PR with forty comments and zero condescension. I still write code for that reviewer.",
+    "Every system that didn't fall over this year is a love letter from you.",
+    "Travel far, settle soft. The pipelines will hold. Probably.",
+    "Honest in the postmortem, kind in the hallway. Rare combination.",
+    "You taught me that 'I don't know yet' is a complete sentence.",
+    "Wherever you land, they're getting the best mentor we ever had."
   ]
 }

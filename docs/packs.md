@@ -23,7 +23,7 @@ Pack** — no rebuild needed (hotkey changes apply on next launch).
     "glyph": "</>",                // see docs/making-charms.md
     "size": 96,                    // points
     "gradientHexes": ["#E8590C", "#FFB86B", "#FF5E78"],
-    "accentHex": "#E8590C",        // note monograms
+    "accentHex": "#E8590C",        // twin bead color in the flat scene diagram
     "menuGlyph": "</>"             // optional menu bar text/emoji
   },
   "thread": { "colorHex": "#FFFFFF", "width": 3 },
@@ -36,14 +36,16 @@ Pack** — no rebuild needed (hotkey changes apply on next launch).
   },
   "blessSoundPath": "chime.aiff",  // optional, relative to pack.json
   "notes": [
-    { "text": "The words that appear under the charm.", "from": "A name" }
+    "The words that appear under the charm. Text only — nothing else."
   ]
 }
 ```
 
 Notes rotate in order, advancing on every click of the charm, ⌃⌥N, the
-interval timer, and `dangle://note`. The counter under the note shows where
-you are in the rotation.
+interval timer, and `dangle://note`. The note card shows exactly the text —
+no author, no counter. If the hanging charm has its own notes (see
+[docs/making-charms.md](making-charms.md)), those rotate instead of the
+pack's; switching back to **Pack Charm** returns to these.
 
 ## Bundling a pack into a build
 

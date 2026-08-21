@@ -8,5 +8,10 @@
     "gradientHexes": ["#2F9E44", "#69DB7C", "#B2F2BB"],
     "accentHex": "#2F9E44",
     "menuGlyph": "🍀"
-  }
+  },
+  "notes": [
+    "Luck finds the ones who keep showing up.",
+    "Give it a flick before anything that could use a little luck.",
+    "Four leaves: one for hope, one for faith, one for love, one for luck."
+  ]
 }

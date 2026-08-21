@@ -15,14 +15,14 @@ import AppKit
           "noteSeconds": 7,
           "noteIntervalMinutes": 30,
           "hotkeys": { "toggle": "ctrl+opt+d" },
-          "notes": [ { "text": "Hi", "from": "Tests" } ]
+          "notes": [ "Hi" ]
         }
         """
         let pack = try JSONDecoder().decode(DanglePack.self, from: Data(json.utf8))
         #expect(pack.name == "Test")
         #expect(pack.charm.kind == "glyph3d")
         #expect(pack.charmSize == 96)
-        #expect(pack.notes.count == 1)
+        #expect(pack.notes == ["Hi"])
         #expect(pack.noteIntervalMinutes == 30)
         #expect(pack.hotkeys?["toggle"] == "ctrl+opt+d")
     }
@@ -71,6 +71,8 @@ import AppKit
                 Charm.self,
                 from: Data(contentsOf: charmsDir.appendingPathComponent(entry.file)))
             #expect(charm.id == entry.id)
+            // Every catalog charm speaks for itself once hung.
+            #expect(!(charm.notes ?? []).isEmpty)
         }
     }
 

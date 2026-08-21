@@ -41,7 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 engine.bless()
             case "note":
                 if let text = query("text"), !text.isEmpty {
-                    engine.showCustomNote(text: text, from: query("from") ?? "dangle://")
+                    engine.showCustomNote(text: text)
                 } else {
                     engine.showNextNote()
                 }

@@ -57,8 +57,9 @@ Requires macOS 14+. Building needs only the Xcode Command Line Tools.
   your cursor; every other pixel clicks through.
 - **Re-hang anywhere** — drag the charm along the top edge.
 - **Notes** — click the charm and a native-vibrancy note springs in beneath
-  it for a few seconds (words from your team, reminders, anything), with the
-  author's monogram and a quiet counter. Notes can also appear on a timer.
+  it for a few seconds: just the words, nothing else. Notes can also appear
+  on a timer. Catalog charms carry their own (heart and clover each speak
+  for themselves); switch back to **Pack Charm** for the pack's.
 - **Summon and dismiss** — ⌃⌥D drops it in and lifts it away; ⌃⌥N shows the
   next note; ⌃⌥B blesses the moment. All three remappable per pack.
 - **The bless ritual** — `open "dangle://bless"`: one confetti pop from
@@ -66,8 +67,8 @@ Requires macOS 14+. Building needs only the Xcode Command Line Tools.
   [canvas-confetti](https://github.com/catdad/canvas-confetti)'s particle
   physics (ISC, Kiril Vatev): pop, decay, wobble, flutter. Wire it into a
   deploy script or git hook.
-- **Scriptable** — `open "dangle://note?text=Ship%20it&from=CI"` shows any
-  message from any tool.
+- **Scriptable** — `open "dangle://note?text=Ship%20it"` shows any message
+  from any tool.
 - **Behind-windows mode** and **Launch at Login** from the menu bar.
 - **Native and light** — AppKit + Core Animation, zero dependencies, no
   Electron, no WebView.
@@ -80,26 +81,30 @@ deltas over wall time:
 | State | CPU (one core) |
 | --- | --- |
 | Dismissed, or screen asleep | 0% (display link paused) |
-| Dangling in the idle breeze | **~1.3%** |
-| Confetti bursts + notes + full-rate 3D | ~9% peak, while it lasts |
+| Dangling, including the idle breeze | **~12%** |
+| Confetti bursts + notes | a little higher, while it lasts |
 
-How: the physics loop drops from 120Hz to 30Hz when nothing moves; the
-SceneKit view is swapped for a bitmap of its last frame and detached from the
-window whenever the charm is quiet (SceneKit re-renders every vsync merely by
-existing, ~6% CPU); scene writes below the visible-change threshold are
-skipped; and the display link pauses entirely when the charm is dismissed.
-The moment you move the cursor near the charm everything snaps back to full
-rate — physics stays identical either way because the fixed timestep just
-runs more steps per tick.
+The charm renders at full rate — 120Hz physics, live SceneKit — the entire
+time it's on screen, idle breeze included, so there's no step-down and no
+stutter. It fully sleeps (0%) only once dismissed and off-screen. That
+trade — CPU for a charm that never stutters — is deliberate: nobody keeps a
+charm animating on their screen for eight hours straight. The engine still
+paused the display link entirely on dismiss and skips SceneKit writes below
+the visible-change threshold; the old 30Hz idle throttle and
+sleep-to-a-bitmap-while-idle behavior are still in the code
+(`DangleEngine.tick`/`render`) as one-line flips if a future contributor
+wants that trade back.
 
 ## Charms
 
-The app ships with the `</>` charm. **Charm → Get New Charms…** fetches the
-[catalog](charms/index.json) from this repository and installs anything new —
-publishing a charm here makes it available to every user, no release needed.
-**Charm → Pick an Emoji…** hangs any emoji instead.
+The app ships with the `</>` charm alone. Two more are published in the
+catalog and available to everyone: **Heart** and **Four-Leaf Clover**.
+**Charm → Get New Charms…** fetches the [catalog](charms/index.json) from
+this repository and installs anything new — publishing a charm here makes
+it available to every user, no release needed. **Charm → Pick an Emoji…**
+hangs any emoji instead.
 
-A charm is a small JSON file:
+A charm is a small JSON file, with its own notes if it wants them:
 
 ```json
 {
@@ -112,7 +117,8 @@ A charm is a small JSON file:
     "gradientHexes": ["#C81E3C", "#FF5E78", "#FFB3C1"],
     "accentHex": "#C81E3C",
     "menuGlyph": "❤️"
-  }
+  },
+  "notes": ["A little more love in the room today."]
 }
 ```
 
@@ -147,8 +153,8 @@ so the personal words never end up in a repository.
 | URL | Effect |
 | --- | --- |
 | `dangle://bless` | Summon if hidden, then one confetti pop |
-| `dangle://note` | Show the next pack note |
-| `dangle://note?text=…&from=…` | Show a custom note |
+| `dangle://note` | Show the next note (the active charm's, or the pack's) |
+| `dangle://note?text=…` | Show a custom note |
 | `dangle://charm?id=heart` | Hang an installed charm |
 | `dangle://charm?glyph=🍀` | Hang that emoji |
 | `dangle://charm` | Back to the pack's charm |

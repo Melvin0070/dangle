@@ -32,7 +32,6 @@ public final class DangleEngine: NSObject {
     private var prevPts: [VerletRope.Point] = []
     private var tiltY: CGFloat = 0
     private var tiltX: CGFloat = 0
-    private var frameIndex = 0
     private var activityLevel: CGFloat = 0
     private var charmActiveNow = false
     private var idlePhase: CGFloat = 0
@@ -421,8 +420,18 @@ public final class DangleEngine: NSObject {
 
     // MARK: Notes
 
+    /// The charm's own notes take over while it hangs; otherwise the pack's.
+    private var activeNotes: [String] {
+        if let id = charmOverrideID, !id.hasPrefix("emoji:"),
+           let notes = CharmStore.shared.charm(id: id)?.notes, !notes.isEmpty {
+            return notes
+        }
+        return pack.notes
+    }
+
     public func showNextNote() {
-        guard !pack.notes.isEmpty else { return }
+        let notes = activeNotes
+        guard !notes.isEmpty else { return }
         // Asked for a note while hidden? Drop in first, then speak — and only
         // advance the rotation when the note will actually be seen.
         guard rope.dangled else {
@@ -433,30 +442,27 @@ public final class DangleEngine: NSObject {
             }
             return
         }
-        let index = defaults.integer(forKey: Keys.noteIndex) % pack.notes.count
+        let index = defaults.integer(forKey: Keys.noteIndex) % notes.count
         defaults.set(index + 1, forKey: Keys.noteIndex)
-        show(note: pack.notes[index], counter: "\(index + 1) / \(pack.notes.count)")
+        show(text: notes[index])
     }
 
-    /// A note from outside the pack — dangle://note?text=…&from=…
-    public func showCustomNote(text: String, from: String) {
+    /// A note from outside the pack — dangle://note?text=…
+    public func showCustomNote(text: String) {
         if !rope.dangled { summon(withNote: false) }
         let delay: Double = rope.dangled ? 0 : 1.0
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-            self?.show(note: DanglePack.Note(text: text, from: from), counter: nil)
+            self?.show(text: text)
         }
     }
 
-    private func show(note: DanglePack.Note, counter: String?) {
+    private func show(text: String) {
         guard rope.dangled else { return }
         noteHideTimer?.invalidate()
         noteVisible = true
 
+        let size = noteView.configure(text: text)
         let p = effectivePack
-        let size = noteView.configure(note: note,
-                                      accent: NSColor(hex: p.charm.accentHex),
-                                      gradient: p.gradientColors,
-                                      counter: counter)
         let top = rope.tuning.hangY + rope.restLength + CharmLayer.loopGap
             + p.charmSize + 18
         let x = min(max(rope.anchorX, size.width / 2 + 12),
@@ -512,17 +518,14 @@ public final class DangleEngine: NSObject {
             steps += 1
         }
         render()
-        // The slow 3D turn runs only while the charm is awake; while truly
-        // quiet its pose freezes below the write threshold, and SceneKit
-        // renders nothing at all.
-        if charmActiveNow { idlePhase += frame }
+        idlePhase += frame
         confetti.step(frameDt: frame)
 
-        // Idle breeze needs 30Hz, not 120: drop the whole loop when nothing
-        // and nobody is near, and snap back the moment motion or the cursor
-        // arrives. Physics stays identical — the fixed timestep just runs
-        // more steps per tick.
-        setLinkRate(active: charmActiveNow || mouseNearCharm)
+        // Power-saving idle throttle (30Hz + frame-skipped 3D) traded away
+        // for always-smooth motion: CPU is cheap, a stutter after 1-2 idle
+        // seconds is not. Re-enable with `setLinkRate(active: charmActiveNow
+        // || mouseNearCharm)` if idle CPU needs trimming later.
+        setLinkRate(active: true)
 
         // Fully retracted and quiet: stop burning frames until summoned.
         if rope.isFullyHidden && !noteVisible && !confetti.isActive {
@@ -624,15 +627,10 @@ public final class DangleEngine: NSObject {
         tiltY += (min(max(vel.x * 0.05, -0.5), 0.5) - tiltY) * 0.12
         tiltX += (min(max(-vel.y * 0.025, -0.22), 0.22) - tiltX) * 0.12
 
-        // Activity with decay: full-rate 3D while anything is really moving,
-        // 20fps while only the idle breeze is. The decay keeps the rate from
-        // flapping at swing apexes where velocity passes through zero.
-        frameIndex += 1
+        // Kept only for the dumpDebug diagnostic; no longer gates rendering.
         let speed = hypot(vel.x, vel.y)
         activityLevel = max(speed, activityLevel * 0.96)
-        let charmActive = rope.dragging || confetti.isActive || activityLevel > 0.3
-        let renderCharm3D = charmActive || frameIndex % 6 == 0
-        charmActiveNow = charmActive
+        charmActiveNow = rope.dragging || confetti.isActive || activityLevel > 0.3
 
         CATransaction.begin()
         CATransaction.setDisableActions(true)
@@ -673,24 +671,22 @@ public final class DangleEngine: NSObject {
 
         if let charm3D {
             // SceneKit burns ~6% CPU merely existing in the window, paused or
-            // not. While moving (or about to be poked) the live view runs;
-            // once quiet — 0.12 sits well above the breeze's measured peak
-            // endpoint speed of 0.041 px/step — it is swapped for a bitmap
-            // of its last frame and detached entirely.
-            let wantLive = charmActive || mouseNearCharm || activityLevel > 0.12
+            // not, so it still sleeps to a bitmap once fully off-screen — but
+            // stays live for the entire time it's visible, including the
+            // idle breeze, so nothing ever steps down to a lower rate while
+            // dangling.
+            let wantLive = !rope.isFullyHidden
             if wantLive && charm3DSleeping {
                 wakeCharm3D(charm3D)
             } else if !wantLive && !charm3DSleeping {
                 sleepCharm3D(charm3D)
             }
             if !charm3DSleeping {
-                if renderCharm3D {
-                    let s = charm3D.viewSide
-                    // The glyph pivot sits at the view's center; park it on
-                    // the rope end so the chrome ring meets the ribbon.
-                    charm3D.setFrameOrigin(NSPoint(x: end.x - s / 2, y: end.y - s / 2))
-                    charm3D.orient(swing: angle, tiltY: tiltY, tiltX: tiltX, idle: idlePhase)
-                }
+                let s = charm3D.viewSide
+                // The glyph pivot sits at the view's center; park it on
+                // the rope end so the chrome ring meets the ribbon.
+                charm3D.setFrameOrigin(NSPoint(x: end.x - s / 2, y: end.y - s / 2))
+                charm3D.orient(swing: angle, tiltY: tiltY, tiltX: tiltX, idle: idlePhase)
             } else {
                 // Keep the parked bitmap on the rope end; sub-pixel breeze
                 // drift skips the move.

@@ -182,9 +182,7 @@ if pack.charm.kind == "glyph3d", let device = MTLCreateSystemDefaultDevice() {
 }
 
 // 2. A note.
-if let first = pack.notes.first,
-   let note = Rendering.noteImage(first, accent: NSColor(hex: pack.charm.accentHex),
-                                  counter: "1 / \(pack.notes.count)") {
+if let first = pack.notes.first, let note = Rendering.noteImage(first) {
     write(note.image, to: "note.png")
 }
 
