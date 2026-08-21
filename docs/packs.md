@@ -56,3 +56,25 @@ make gift PACK=path/to/pack.json                # app + DMG, ready to hand over
 
 Put your own packs in `Packs/local/` — it's gitignored, so custom names and
 notes never end up in a repository.
+
+### Charms only that pack has
+
+A pack can carry charms of its own in a `charms/` folder next to its
+`pack.json`:
+
+```
+Packs/local/mine/
+  pack.json
+  charms/voto.json
+  charms/sorte.json
+```
+
+They install alongside the published catalog and appear in the **Charm**
+menu, so a private build can ship charms nobody else ever sees. They are
+ordinary charm files — see [docs/making-charms.md](making-charms.md) — and
+a `glyph3d` one still needs its shape to exist in the app it is built into.
+
+One gotcha: if the pack's own `charm` block is identical to a charm already
+installed, the menu drops the **Pack Charm** entry as a duplicate and the
+pack's notes become unreachable. Give the pack charm its own gradient or
+size so the two are distinguishable.

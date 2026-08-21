@@ -58,7 +58,8 @@ import AppKit
         #expect(!packs.isEmpty)
         for dir in packs {
             let url = dir.appendingPathComponent("pack.json")
-            _ = try DanglePack.load(from: url)
+            let pack = try DanglePack.load(from: url)
+            expectRenderableGlyph(pack.charm, source: dir.lastPathComponent)
         }
 
         let charmsDir = root.appendingPathComponent("charms")
@@ -73,7 +74,19 @@ import AppKit
             #expect(charm.id == entry.id)
             // Every catalog charm speaks for itself once hung.
             #expect(!(charm.notes ?? []).isEmpty)
+            expectRenderableGlyph(charm.charm, source: entry.file)
         }
+    }
+
+    /// A glyph3d charm naming a shape nobody built does not fail — it hangs
+    /// the name itself, extruded as type. That is right for "&" or "λ" and
+    /// silently wrong for "caravel", so anything longer has to be bespoke.
+    private func expectRenderableGlyph(_ spec: DanglePack.CharmSpec, source: String) {
+        guard spec.kind == "glyph3d" else { return }
+        // A charm carrying its own path data does not need a glyph at all.
+        if spec.pathData != nil { return }
+        #expect(Charm3D.bespokeGlyphs.contains(spec.glyph) || spec.glyph.count <= 2,
+                "\(source): glyph3d \"\(spec.glyph)\" has no geometry and would hang as text")
     }
 
     @Test func loadFailsOnMissingFile() {

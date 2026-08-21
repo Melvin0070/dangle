@@ -261,6 +261,11 @@ public final class DangleEngine: NSObject {
     private var threadTopWidth: CGFloat = 4.2
     private var threadBottomWidth: CGFloat = 1.9
 
+    /// What the hanging charm actually occupies, which is only a square for
+    /// the 2D kinds. Never smaller than the charm size, so a charm stays as
+    /// easy to grab as it has always been however tight its glyph is.
+    private var charmExtents = CGSize(width: 96, height: 96)
+
     private func applyCharmStyle(_ p: DanglePack) {
         uses3D = p.charm.kind == "glyph3d"
         threadTopWidth = CGFloat(p.thread.width) + 1.2
@@ -274,12 +279,15 @@ public final class DangleEngine: NSObject {
             let v = Charm3DView(pack: p)
             view.addSubview(v, positioned: .below, relativeTo: noteView)
             charm3D = v
+            charmExtents = CGSize(width: max(v.metrics.width, p.charmSize),
+                                  height: max(v.metrics.height, p.charmSize))
         } else {
             view.layer?.addSublayer(charm)
             charm.configure(pack: p)
+            charmExtents = CGSize(width: p.charmSize, height: p.charmSize)
         }
-        rope.hangOffset = CharmLayer.loopGap + p.charmSize / 2
-        rope.charmRadius = max(40, p.charmSize * 0.8)
+        rope.hangOffset = CharmLayer.loopGap + charmExtents.height / 2
+        rope.charmRadius = max(40, max(charmExtents.width, charmExtents.height) * 0.8)
 
         let threadColor = NSColor(hex: p.thread.colorHex)
         threadGradient.colors = [threadColor.withAlphaComponent(0.58).cgColor,
@@ -507,9 +515,8 @@ public final class DangleEngine: NSObject {
         noteVisible = true
 
         let size = noteView.configure(text: text)
-        let p = effectivePack
         let top = rope.tuning.hangY + rope.restLength + CharmLayer.loopGap
-            + p.charmSize + 18
+            + charmExtents.height + 18
         let x = min(max(rope.anchorX, size.width / 2 + 12),
                     screen.frame.width - size.width / 2 - 12)
         noteView.setFrameOrigin(NSPoint(x: x - size.width / 2, y: top))
@@ -612,11 +619,10 @@ public final class DangleEngine: NSObject {
         let ca = cos(angle), sa = sin(angle)
         let localX = dx * ca - dy * sa
         let localY = dx * sa + dy * ca
-        let side = effectivePack.charmSize
         let pad: CGFloat = 8
-        return abs(localX) <= side / 2 + pad
+        return abs(localX) <= charmExtents.width / 2 + pad
             && localY >= -pad
-            && localY <= CharmLayer.loopGap + side + pad
+            && localY <= CharmLayer.loopGap + charmExtents.height + pad
     }
 
     private func beginDrag(at p: CGPoint) {

@@ -9,6 +9,26 @@ import DangleKit
 
 let args = CommandLine.arguments
 
+// --svg <glyph>: print a built-in shape as SVG path data and exit. A charm
+// can carry that string as `pathData` instead of naming a glyph, so this is
+// how you take one of the bundled shapes as a starting point for your own.
+if let flagIndex = args.firstIndex(of: "--svg") {
+    guard args.count > flagIndex + 1 else {
+        fatalError("--svg needs a glyph name, e.g. --svg clover")
+    }
+    let name = args[flagIndex + 1]
+    var probe = DanglePack.fallback
+    probe.charm.glyph = name
+    probe.charm.pathData = nil
+    probe.charm.size = 96
+    guard Charm3D.bespokeGlyphs.contains(name) else {
+        fatalError("no bespoke shape named \"\(name)\"; try one of "
+            + Charm3D.bespokeGlyphs.sorted().joined(separator: ", "))
+    }
+    print(SVGPath.string(from: Charm3D.bespokePath(named: name, size: 96).cgPath))
+    exit(0)
+}
+
 // --icon <out.png> [pack.json]: render the app icon (Big Sur rounded square,
 // the 3D charm mid-turn) and exit. Used once per charm change: make icon.
 if let flagIndex = args.firstIndex(of: "--icon") {
@@ -31,7 +51,8 @@ if let flagIndex = args.firstIndex(of: "--icon") {
     let built = Charm3D.makeScene(pack: iconPack, viewSide: 1024)
     built.glyphNode.eulerAngles = SCNVector3(0.10, 0.42, 0.10)
     // Center the glyph body: its pivot is the thread loop above the shape.
-    built.glyphNode.position = SCNVector3(0, iconPack.charmSize * 0.55, 0)
+    built.glyphNode.position = SCNVector3(
+        0, built.metrics.height / 2 + CharmLayer.loopGap, 0)
     // No thread in the icon, so no ring either.
     built.glyphNode.childNodes.forEach { $0.isHidden = true }
     renderer.scene = built.scene
@@ -167,14 +188,16 @@ if let image = Rendering.rasterize(size: charmCard, draw: { ctx in
 // 1b. The real 3D charm, rendered offscreen with SceneKit, mid-swing.
 if pack.charm.kind == "glyph3d", let device = MTLCreateSystemDefaultDevice() {
     let renderer = SCNRenderer(device: device, options: nil)
-    let built = Charm3D.makeScene(pack: pack, viewSide: 220)
+    let built = Charm3D.makeScene(pack: pack)
     built.scene.background.contents = NSColor(srgbRed: 0.055, green: 0.055, blue: 0.08, alpha: 1)
     built.glyphNode.eulerAngles = SCNVector3(0.08, 0.55, 0.3)
     // Center the glyph body; its pivot is the thread loop above the shape.
-    built.glyphNode.position = SCNVector3(0, pack.charmSize * 0.55, 0)
+    built.glyphNode.position = SCNVector3(
+        0, built.metrics.height / 2 + CharmLayer.loopGap, 0)
     renderer.scene = built.scene
+    let side = built.metrics.viewSide * 2
     let image = renderer.snapshot(atTime: 0,
-                                  with: CGSize(width: 440, height: 440),
+                                  with: CGSize(width: side, height: side),
                                   antialiasingMode: .multisampling4X)
     if let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil) {
         write(cg, to: "charm3d.png")

@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.4.0
+
+- **A charm can carry its own shape.** Give it `pathData` — an SVG `d`
+  attribute — and that path is the charm, extruded, chamfered and hung like
+  any other. A new 3D charm no longer needs a case in `Charm3D` and an app
+  release; it is JSON like everything else. `fillHex`, `metalness`,
+  `roughness`, `depth` and `chamfer` came along so a data-only charm can pick
+  its own finish.
+- `swift run DangleSnapshot --svg <glyph>` prints a bundled shape as path
+  data, to start from rather than from nothing.
+- Path data is untrusted input and is treated as such: 64 KB and 4,000
+  segments, strict parsing, and a malformed path rejected whole rather than
+  drawn half-finished. Paths are normalized before extrusion, so the
+  overlapping subpaths design tools emit come out right instead of filling
+  solid — SceneKit's own tessellator fills overlapping rings solid and
+  notches shapes where they cross.
+- **Any aspect ratio can hang now.** The 3D charm used to be fitted on
+  height alone inside a fixed `2.15 × size` view, so anything wider than
+  square grew straight past the view it swings in and clipped. The glyph is
+  now fitted on height *and* capped on width, and the view sizes itself from
+  the glyph's actual swing radius. Square-ish charms render byte-identically;
+  wide ones simply work. The `</>` gains a few points of headroom it was
+  quietly short of at full swing.
+- The engine tracks the charm's real extents instead of assuming a square,
+  so the grab box, cursor repulsion, and note placement follow the shape.
+  Never smaller than the old square, so nothing gets harder to grab.
+- `make test` now fails a `glyph3d` charm or pack whose glyph has no
+  geometry. Those used to hang the glyph *name* as extruded text, silently:
+  a pack asking for `"caravel"` really did dangle the word "caravel".
+- A pack can carry its own charms in a `charms/` folder next to
+  `pack.json`; `make gift` bundles them alongside the catalog. Private
+  builds can now ship charms that were never published anywhere.
+
 ## 0.2.5
 
 Pre-1.0 cleanup pass — no user-facing feature changes, all internal:

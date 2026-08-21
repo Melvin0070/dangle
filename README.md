@@ -48,12 +48,14 @@ Requires macOS 14+. Building needs only the Xcode Command Line Tools.
   size, drag, flick, stretch, and a velocity-driven 3D turn.
 - **A real 3D charm** — the `</>` is extruded SceneKit geometry (chunky
   rounded capsules, dark chrome, gradient environment reflections, HDR bloom)
-  that banks and turns as it swings. A chrome bead rides the thread partway
+  that banks and turns as it swings, in a view sized to its own swing so any
+  shape hangs — tall, square, or wide. A chrome bead rides the thread partway
   up; for the 2D charm kinds it becomes a tiny twin of the charm.
-- **Charms arrive as data** — `</>`, Heart, and Four-Leaf Clover ship with
-  the app, no fetch needed. Whatever's published after that to this
-  repository's [`charms/`](charms/) catalog installs from **Charm → Get New
-  Charms…**. Or hang any emoji.
+- **Charms arrive as data** — including their *shapes*: a charm can carry an
+  SVG path and be extruded from it, so a new 3D charm is a JSON file, not an
+  app release. `</>`, Heart, and Four-Leaf Clover ship with the app. Whatever's published
+  after that to this repository's [`charms/`](charms/) catalog installs from
+  **Charm → Get New Charms…**. Or hang any emoji.
 - **Stays out of the way** — no Dock icon, no windows. Only the charm catches
   your cursor; every other pixel clicks through.
 - **Re-hang anywhere** — drag the charm along the top edge.

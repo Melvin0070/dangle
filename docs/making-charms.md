@@ -36,27 +36,83 @@ makes it installable by every Dangle user from **Charm → Get New Charms…**
 | `charm.gradientHexes` | Colors for rim reflections (3D) or the tile gradient (glass). |
 | `charm.accentHex` | Accent for the twin bead in the flat scene diagram. |
 | `charm.menuGlyph` | Emoji or short text for the menu bar while this charm hangs. |
+| `charm.pathData` | An SVG `d` attribute. When present it *is* the shape and `glyph` is ignored. See below. |
+| `charm.pathEvenOdd` | Fill `pathData` by the even-odd rule. Design tools write `fill-rule="evenodd"` for most compound shapes. |
+| `charm.fillHex` | Material color. Default is the dark chrome. |
+| `charm.metalness` | 0–1, default 1. |
+| `charm.roughness` | 0–1, default 0.2. |
+| `charm.depth` | Extrusion depth in points, default 13. |
+| `charm.chamfer` | Chamfer radius in points, default 2.4. |
 | `notes` | Optional. This charm's own notes — shown instead of the pack's while it hangs, text only. Omit to fall back to whatever pack the charm is hung on. |
 
 ## What can hang
 
 **`glyph3d`** — a real extruded shape with chamfered edges, PBR chrome, and
-reflections from the pack gradient. Three glyphs have bespoke geometry built
-from rounded capsules and bezier curves (typeset text never looks right
-extruded):
+reflections from the pack gradient. Some glyphs have bespoke geometry built
+from rounded capsules, stroked ellipses, and bezier curves (typeset text
+never looks right extruded) — `Charm3D.bespokeGlyphs` is the authoritative
+list:
 
 - `</>` — the code mark
 - `heart` — a lacquer heart
 - `clover` — four heart-leaves, tips meeting at the center, no stem
 
+Shape, not just outline: a charm is one flat path extruded with a chamfer,
+wearing one material. Interior detail is invisible — a silhouette has no
+inside — and strokes thinner than about `0.06 × size` disappear under the
+chamfer. Overlapping subpaths are resolved for you — `pathData` is
+normalized before extrusion, because SceneKit's own tessellator fills
+overlapping rings solid and notches shapes where they cross.
+
+Any aspect ratio hangs — the view sizes itself to the glyph's swing — but
+the thread ties to the top-center of the glyph's *bounds*, so put some
+material there. A shape whose tallest point is off to one side hangs from a
+ring floating in mid-air.
+
 Any other `glyph` string is extruded as heavy monospaced type, which works
 for single characters (`&`, `λ`, `∞`) and gets worse the longer the string.
-For a new shape at Lucky Dangle quality, add a path function to
-[`Charm3D.swift`](../Sources/DangleKit/Charm3D.swift) (see `codeGlyphPath` /
-`heartPath` / `cloverPath` — they're ~30 lines each) and a case for it in
-`makeScene`, then reference it by name from your charm JSON. That does need
-an app release, so shape PRs ride the next version; color/emoji charms ship
-instantly.
+`make test` fails a catalog charm whose `glyph3d` glyph is neither bespoke
+nor short, because the fallback would silently hang the name itself as text.
+
+### Shapes as data
+
+You do not need a case in `Charm3D` to hang a new shape. Give the charm
+`pathData` — an SVG `d` attribute — and that path *is* the charm:
+
+```json
+{
+  "id": "moon",
+  "name": "Crescent",
+  "charm": {
+    "kind": "glyph3d",
+    "glyph": "moon",
+    "accentHex": "#C8A15A",
+    "gradientHexes": ["#1B1B2E", "#8E8AA8", "#C8A15A"],
+    "fillHex": "#C8C2D8",
+    "metalness": 1.0,
+    "roughness": 0.25,
+    "pathData": "M 0 -40 A 40 40 0 1 0 0 40 A 30 30 0 1 1 0 -40 Z"
+  }
+}
+```
+
+Draw the shape in Figma, Illustrator, or Affinity, export SVG, and copy the
+`d` attribute out. Hand-typing bezier control points and re-rendering to see
+what happened is a bad way to spend an afternoon. To start from a shape that
+already ships:
+
+```bash
+swift run DangleSnapshot --svg clover
+```
+
+The parser takes `M L H V C S Q T A Z`, absolute and relative. Path data
+from a catalog is untrusted input, so it is bounded: 64 KB of source and
+4,000 segments, and a malformed path is rejected whole rather than drawn
+half-finished. Coordinates are in SVG's y-down space and any scale you like
+— the charm is fitted to `charm.size` by its bounding box either way.
+
+A charm with `pathData` ships like any other charm: a JSON file, no app
+release. Only new *named* glyphs still need one.
 
 **`glass`** — a rounded gradient tile with the glyph on top, animated
 gradient drift. The lightest kind.

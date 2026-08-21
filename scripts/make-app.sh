@@ -44,6 +44,16 @@ for charm in charms/*.json; do
     cp "$charm" "$APP/Contents/Resources/Charms/"
 done
 
+# A pack can carry charms of its own in a charms/ folder next to pack.json.
+# They install alongside the catalog ones and show up in the Charm menu, so a
+# private build can ship charms that were never published anywhere.
+shopt -s nullglob
+for charm in "$PACK_DIR"/charms/*.json; do
+    [ "$(basename "$charm")" = "index.json" ] && continue
+    cp "$charm" "$APP/Contents/Resources/Charms/"
+done
+shopt -u nullglob
+
 if [ -f Assets/AppIcon.icns ]; then
     cp Assets/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 fi

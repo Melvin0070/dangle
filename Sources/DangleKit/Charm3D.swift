@@ -6,16 +6,69 @@ import SceneKit
 /// rim catches the pack's colors. No background — just the floating shape.
 public enum Charm3D {
 
+    /// How big the charm actually came out, and the view that has to hold it.
+    public struct Metrics: Equatable {
+        /// The glyph's rendered extents in points, after fitting.
+        public let width: CGFloat
+        public let height: CGFloat
+        /// Side of the square view a full 360° swing about the loop needs.
+        public let viewSide: CGFloat
+    }
+
+    /// Glyphs with bespoke geometry. Anything else is extruded as type, which
+    /// only reads for one or two characters — a longer string here is almost
+    /// always a shape nobody built, hung as the literal word instead.
+    public static let bespokeGlyphs: Set<String> = [
+        "</>", "code", "heart", "clover",
+    ]
+
+    /// The path behind a bespoke glyph name, so tooling can export one as a
+    /// starting point for a charm's own `pathData`. Empty for anything else.
+    public static func bespokePath(named glyph: String, size: CGFloat) -> NSBezierPath {
+        switch glyph {
+        case "</>", "code": return codeGlyphPath(size: size)
+        case "heart": return heartPath(size: size)
+        case "clover": return cloverPath(size: size)
+        default: return NSBezierPath()
+        }
+    }
+
+    /// Fits a glyph of the given bounding box to the charm size, and works
+    /// out the view its swing needs. Pure math on purpose: the aspect-ratio
+    /// rules are the easiest thing here to get wrong and the hardest to see.
+    public static func fit(bbW: CGFloat, bbH: CGFloat, size: CGFloat,
+                           fixedSide: CGFloat? = nil) -> (scale: CGFloat, metrics: Metrics) {
+        // Height sets the scale, so square-ish charms come out exactly as
+        // they always have. The width cap is what lets a wide shape hang at
+        // all: fitted on height alone, a 3:1 glyph ends up wider than the
+        // view it swings in, and a stray glyph name extruded as a whole word
+        // ends up wider still.
+        let scale = min((size * 0.82) / max(bbH, 0.001),
+                        (size * 1.90) / max(bbW, 0.001))
+        let width = bbW * scale
+        let height = bbH * scale
+        // A full swing about the loop sweeps a circle of this radius. Sizing
+        // the view from the glyph — rather than from a fixed multiple of the
+        // charm size — is what makes any aspect ratio safe to hang.
+        let reach = hypot(width / 2, height + CharmLayer.loopGap)
+        return (scale, Metrics(width: width, height: height,
+                               viewSide: fixedSide ?? (reach + 8) * 2))
+    }
+
     /// Scene units are points (orthographic camera), so layout math matches
-    /// the 2D engine exactly.
-    public static func makeScene(pack: DanglePack, viewSide: CGFloat)
-        -> (scene: SCNScene, glyphNode: SCNNode) {
+    /// the 2D engine exactly. `fixedSide` pins the view for offscreen
+    /// renders; live charms size the view to their own swing.
+    public static func makeScene(pack: DanglePack, viewSide fixedSide: CGFloat? = nil)
+        -> (scene: SCNScene, glyphNode: SCNNode, metrics: Metrics) {
         let scene = SCNScene()
         scene.background.contents = NSColor.clear
 
+        let (glyphNode, metrics) = makeGlyph(pack: pack, fixedSide: fixedSide)
+        scene.rootNode.addChildNode(glyphNode)
+
         let camera = SCNCamera()
         camera.usesOrthographicProjection = true
-        camera.orthographicScale = viewSide / 2
+        camera.orthographicScale = metrics.viewSide / 2
         camera.zNear = 1
         camera.zFar = 400
         camera.wantsHDR = true
@@ -56,6 +109,13 @@ public enum Charm3D {
         ambientNode.light = ambient
         scene.rootNode.addChildNode(ambientNode)
 
+        return (scene, glyphNode, metrics)
+    }
+
+    /// The extruded glyph itself, fitted to the pack's charm size and pivoted
+    /// at its thread loop, plus the chrome ring the thread ties to.
+    private static func makeGlyph(pack: DanglePack, fixedSide: CGFloat?)
+        -> (SCNNode, Metrics) {
         let size = pack.charmSize
         let geometry: SCNGeometry
         let material = SCNMaterial()
@@ -63,6 +123,30 @@ public enum Charm3D {
         material.metalness.contents = 1.0
         material.roughness.contents = 0.2
         material.diffuse.contents = NSColor(hex: "#9A9AA6")
+
+        if let d = pack.charm.pathData {
+            // A shape that arrived as data rather than as a case in this
+            // file. Normalizing resolves the overlapping subpaths design
+            // tools emit; SceneKit's tessellator cannot, and fills rings
+            // solid when handed them raw.
+            let rule: CGPathFillRule = (pack.charm.pathEvenOdd ?? false) ? .evenOdd : .winding
+            if let parsed = try? SVGPath.path(from: d) {
+                let shape = SCNShape(path: NSBezierPath(cgPath: parsed.normalized(using: rule)),
+                                     extrusionDepth: CGFloat(pack.charm.depth ?? 13))
+                shape.chamferRadius = CGFloat(pack.charm.chamfer ?? 2.4)
+                geometry = shape
+            } else {
+                // Bad path data is not worth crashing over, and not worth
+                // hiding either: hang the fallback so the charm reads as
+                // visibly wrong rather than quietly missing.
+                let shape = SCNShape(path: codeGlyphPath(size: size), extrusionDepth: 16)
+                shape.chamferRadius = 2.6
+                geometry = shape
+            }
+            applyMaterialOverrides(pack.charm, to: material)
+            return finish(geometry: geometry, material: material,
+                          size: size, fixedSide: fixedSide)
+        }
 
         switch pack.charm.glyph {
         case "</>", "code":
@@ -91,13 +175,30 @@ public enum Charm3D {
             text.chamferRadius = 2.2
             geometry = text
         }
+        return finish(geometry: geometry, material: material,
+                      size: size, fixedSide: fixedSide)
+    }
+
+    /// Per-charm material overrides, so a charm that arrived as data can pick
+    /// its own colour and finish without a case in this file.
+    private static func applyMaterialOverrides(_ spec: DanglePack.CharmSpec,
+                                               to material: SCNMaterial) {
+        if let hex = spec.fillHex { material.diffuse.contents = NSColor(hex: hex) }
+        if let metalness = spec.metalness { material.metalness.contents = metalness }
+        if let roughness = spec.roughness { material.roughness.contents = roughness }
+    }
+
+    /// Everything downstream of the shape itself: fit it, pivot it at the
+    /// thread loop, and hang the ring the thread ties to.
+    private static func finish(geometry: SCNGeometry, material: SCNMaterial,
+                               size: CGFloat, fixedSide: CGFloat?) -> (SCNNode, Metrics) {
         geometry.materials = [material]
 
         let glyphNode = SCNNode(geometry: geometry)
         let (minB, maxB) = glyphNode.boundingBox
         let bbW = maxB.x - minB.x
         let bbH = maxB.y - minB.y
-        let scale = (size * 0.82) / bbH
+        let (scale, metrics) = fit(bbW: bbW, bbH: bbH, size: size, fixedSide: fixedSide)
         glyphNode.scale = SCNVector3(scale, scale, scale)
         // Pivot at the thread loop: top-center of the glyph, loopGap above it.
         let pivotX = minB.x + bbW / 2
@@ -107,7 +208,6 @@ public enum Charm3D {
         // Pivot at the CENTER of the view, so no overswing can ever clip
         // against the view's own bounds.
         glyphNode.position = SCNVector3(0, 0, 0)
-        scene.rootNode.addChildNode(glyphNode)
 
         // The link the thread ties to: a small chrome ring at the pivot,
         // riding the glyph so the connection never separates.
@@ -121,7 +221,7 @@ public enum Charm3D {
         ringNode.position = SCNVector3(pivotX, pivotY, pivotZ)
         glyphNode.addChildNode(ringNode)
 
-        return (scene, glyphNode)
+        return (glyphNode, metrics)
     }
 
     /// The </> built from rounded capsules — two arms per chevron overlapping
@@ -255,15 +355,18 @@ public enum Charm3D {
 public final class Charm3DView: SCNView {
 
     public private(set) var glyphNode: SCNNode?
-    public let viewSide: CGFloat
+    public let metrics: Charm3D.Metrics
+    public var viewSide: CGFloat { metrics.viewSide }
 
     public init(pack: DanglePack) {
-        // Big enough that a full 360° swing about the centered pivot stays
-        // inside the view — the glyph's reach is ~0.95× charm size.
-        viewSide = pack.charmSize * 2.15
-        super.init(frame: NSRect(x: 0, y: 0, width: viewSide, height: viewSide),
+        // The scene sizes its own view around the glyph's swing, whatever
+        // shape the glyph turned out to be.
+        let built = Charm3D.makeScene(pack: pack)
+        metrics = built.metrics
+        super.init(frame: NSRect(x: 0, y: 0,
+                                 width: built.metrics.viewSide,
+                                 height: built.metrics.viewSide),
                    options: nil)
-        let built = Charm3D.makeScene(pack: pack, viewSide: viewSide)
         scene = built.scene
         glyphNode = built.glyphNode
         backgroundColor = .clear

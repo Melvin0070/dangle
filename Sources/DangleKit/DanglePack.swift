@@ -33,6 +33,20 @@ public struct DanglePack: Codable, Equatable {
         public var accentHex: String
         /// Emoji or short text shown in the menu bar while this charm hangs.
         public var menuGlyph: String?
+        /// An SVG `d` attribute. When present it *is* the charm's shape, and
+        /// `glyph` is ignored — this is what lets a new 3D shape ship as data
+        /// instead of as a case in `Charm3D`.
+        public var pathData: String?
+        /// Fill the path by the even-odd rule instead of nonzero. Design
+        /// tools write `fill-rule="evenodd"` for most compound shapes.
+        public var pathEvenOdd: Bool?
+        /// Overrides for the extruded material. All optional; the defaults
+        /// are the dark chrome every charm started out wearing.
+        public var fillHex: String?
+        public var metalness: Double?
+        public var roughness: Double?
+        public var depth: Double?
+        public var chamfer: Double?
     }
 
     public struct ThreadSpec: Codable, Equatable {
