@@ -132,9 +132,14 @@ public final class CharmLayer: CALayer {
         transform = t
     }
 
-    /// The tiny twin bead that sits halfway up the thread.
+    /// The tiny twin bead that sits halfway up the thread. Emoji charms get
+    /// no bead at all — a miniature copy of an arbitrary emoji reads as
+    /// clutter rather than a charm detail.
     public static func bead(pack: DanglePack) -> CALayer {
         let bead = CALayer()
+        if pack.charm.kind == "emoji" {
+            return bead
+        }
         if pack.charm.kind == "glyph3d" {
             // A little chrome ball, same metal as the glyph.
             let s: CGFloat = 11
@@ -154,27 +159,16 @@ public final class CharmLayer: CALayer {
             ball.shadowOffset = CGSize(width: 0, height: 2)
             return ball
         }
-        if pack.charm.kind == "emoji" {
-            let s: CGFloat = 18
-            bead.bounds = CGRect(x: 0, y: 0, width: s, height: s)
-            if let twin = Rendering.glyphImage(pack.charm.glyph, fontSize: 13,
-                                               monospaced: false, shadowed: false) {
-                bead.contents = twin
-                bead.contentsScale = 2
-            }
-        } else {
-            let s: CGFloat = 14
-            let gradient = CAGradientLayer()
-            gradient.bounds = CGRect(x: 0, y: 0, width: s, height: s)
-            gradient.colors = pack.gradientColors.map(\.cgColor)
-            gradient.startPoint = CGPoint(x: 0, y: 0)
-            gradient.endPoint = CGPoint(x: 1, y: 1)
-            gradient.cornerRadius = 5
-            gradient.borderWidth = 1
-            gradient.borderColor = NSColor.white.withAlphaComponent(0.35).cgColor
-            gradient.position = .zero
-            return gradient
-        }
-        return bead
+        let s: CGFloat = 14
+        let gradient = CAGradientLayer()
+        gradient.bounds = CGRect(x: 0, y: 0, width: s, height: s)
+        gradient.colors = pack.gradientColors.map(\.cgColor)
+        gradient.startPoint = CGPoint(x: 0, y: 0)
+        gradient.endPoint = CGPoint(x: 1, y: 1)
+        gradient.cornerRadius = 5
+        gradient.borderWidth = 1
+        gradient.borderColor = NSColor.white.withAlphaComponent(0.35).cgColor
+        gradient.position = .zero
+        return gradient
     }
 }

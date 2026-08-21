@@ -142,9 +142,10 @@ public enum Charm3D {
         }
         // Proportions: the slash runs taller than the chevrons (the classic
         // code-mark silhouette) and keeps clear air on both sides — its edge
-        // never touches the chevron apexes.
-        let chevH = s * 0.30
-        let chevW = s * 0.26
+        // never touches the chevron apexes. chevH:chevW controls the chevron
+        // angle — taller relative to narrower reads as more open, less pointy.
+        let chevH = s * 0.34
+        let chevW = s * 0.20
         let thick = s * 0.15
         let lx = -0.43 * s
         addCapsule(from: CGPoint(x: lx - chevW / 2, y: 0),
@@ -190,7 +191,8 @@ public enum Charm3D {
     }
 
     /// Four-leaf clover: four heart-shaped leaves, tips meeting at the
-    /// center, plus a short stem swinging off the bottom.
+    /// center. No stem — at charm scale a stem short enough not to look
+    /// like a stray nub reads as nothing at all, so the leaves stand alone.
     static func cloverPath(size s: CGFloat) -> NSBezierPath {
         let combined = CGMutablePath()
         let leaf = heartCurve(size: s * 0.52)
@@ -203,15 +205,6 @@ public enum Charm3D {
             if let placed = leaf.copy(using: &tf) {
                 combined.addPath(placed)
             }
-        }
-        // Stem: a slim curved capsule from the center out past the leaves.
-        let stem = CGPath(roundedRect: CGRect(x: -0.025 * s, y: -0.52 * s,
-                                              width: 0.05 * s, height: 0.42 * s),
-                          cornerWidth: 0.025 * s, cornerHeight: 0.025 * s,
-                          transform: nil)
-        var stemTf = CGAffineTransform(rotationAngle: -0.22)
-        if let placedStem = stem.copy(using: &stemTf) {
-            combined.addPath(placedStem)
         }
         let bezier = NSBezierPath(cgPath: combined)
         bezier.flatness = 0.05

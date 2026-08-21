@@ -420,10 +420,22 @@ public final class DangleEngine: NSObject {
 
     // MARK: Notes
 
-    /// The charm's own notes take over while it hangs; otherwise the pack's.
+    /// Shown for any hand-picked emoji, which has no notes of its own —
+    /// generic enough to fit whatever was picked, not tied to the pack.
+    private static let genericEmojiNotes = [
+        "However you got here, hi.",
+        "Whatever this means to you, it's yours now.",
+        "Give it a flick.",
+        "Some days just need something hanging from the top of the screen.",
+        "You picked this one. That's reason enough.",
+    ]
+
+    /// The charm's own notes take over while it hangs; a hand-picked emoji
+    /// gets the generic set; otherwise the pack's.
     private var activeNotes: [String] {
-        if let id = charmOverrideID, !id.hasPrefix("emoji:"),
-           let notes = CharmStore.shared.charm(id: id)?.notes, !notes.isEmpty {
+        guard let id = charmOverrideID else { return pack.notes }
+        if id.hasPrefix("emoji:") { return Self.genericEmojiNotes }
+        if let notes = CharmStore.shared.charm(id: id)?.notes, !notes.isEmpty {
             return notes
         }
         return pack.notes

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.1
+
+- The `</>` charm's chevrons are wider and more open — less pointy, more
+  clearly angled.
+- The clover no longer has a stem; at charm scale it read as a stray nub,
+  not a stem. Four leaves stand alone.
+- Real notes for Heart and Four-Leaf Clover (six each), and a generic set
+  for any hand-picked emoji instead of showing the pack's how-to-use notes.
+- The thread no longer carries a miniature twin of a hand-picked emoji as
+  its bead — a shrunk copy of an arbitrary emoji read as clutter, not detail.
+
 ## 0.2.0
 
 - **Breaking:** notes are text only. Removed the author field and rotation
