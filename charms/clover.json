@@ -1,0 +1,12 @@
+{
+  "id": "clover",
+  "name": "Four-Leaf Clover",
+  "charm": {
+    "kind": "glyph3d",
+    "glyph": "clover",
+    "size": 96,
+    "gradientHexes": ["#2F9E44", "#69DB7C", "#B2F2BB"],
+    "accentHex": "#2F9E44",
+    "menuGlyph": "🍀"
+  }
+}

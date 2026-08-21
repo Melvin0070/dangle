@@ -1,0 +1,8 @@
+.build/
+dist/
+snapshots/
+.DS_Store
+.gstack/
+.claude/
+design/
+Packs/local/

@@ -1,0 +1,27 @@
+{
+  "name": "Dangle",
+  "charm": {
+    "kind": "glyph3d",
+    "glyph": "</>",
+    "size": 96,
+    "gradientHexes": ["#E8590C", "#FFB86B", "#FF5E78"],
+    "accentHex": "#E8590C"
+  },
+  "thread": {
+    "colorHex": "#FFFFFF",
+    "width": 3
+  },
+  "noteSeconds": 7,
+  "noteIntervalMinutes": null,
+  "hotkeys": {
+    "toggle": "ctrl+opt+d",
+    "note": "ctrl+opt+n",
+    "bless": "ctrl+opt+b"
+  },
+  "notes": [
+    { "text": "Click me for the next note. Drag me along the top edge to re-hang me anywhere.", "from": "Dangle" },
+    { "text": "⌃⌥D tucks me away and calls me back. ⌃⌥B blesses the moment.", "from": "Dangle" },
+    { "text": "Try: open \"dangle://bless\" — wire it into a deploy script or git hook.", "from": "Dangle" },
+    { "text": "Choose Edit Pack… from the menu bar to make these notes, the charm, and the thread yours.", "from": "Dangle" }
+  ]
+}

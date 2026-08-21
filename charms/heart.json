@@ -1,0 +1,12 @@
+{
+  "id": "heart",
+  "name": "Heart",
+  "charm": {
+    "kind": "glyph3d",
+    "glyph": "heart",
+    "size": 96,
+    "gradientHexes": ["#C81E3C", "#FF5E78", "#FFB3C1"],
+    "accentHex": "#C81E3C",
+    "menuGlyph": "❤️"
+  }
+}
