@@ -1,0 +1,182 @@
+# Dangle
+
+<p align="center">
+  <img src="docs/images/hero.png" width="560" alt="The Dangle charm hanging from the top of the screen, showing a note" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/Melvin0070/dangle/actions/workflows/ci.yml"><img src="https://github.com/Melvin0070/dangle/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT" /></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-black.svg" alt="macOS 14+" />
+</p>
+
+A tiny macOS menu bar app that hangs a charm on a thread from the top of your
+screen. It sways in an idle breeze, leans away from a passing cursor, swings
+properly when grabbed or flicked — and everything except the charm itself
+clicks straight through.
+
+Dangle is an open-source *engine*: the charm, the thread, and the notes it
+shows all come from data. Hang the `</>` while you code, drop a `pack.json`
+in to turn it into a farewell gift or a team talisman, and pick up new charms
+from the menu bar as they're published — no app update needed.
+
+Inspired by (and in admiration of) Karthik Mahadevan's
+[Lucky Dangle](https://luckydangle.app) and Vercel's
+[interactive 3D event badge](https://vercel.com/blog/building-an-interactive-3d-event-badge-with-react-three-fiber).
+Independent implementation, no artwork or assets reused. If you want lovingly
+crafted lucky charms with real rituals and stories, go buy Lucky Dangle.
+
+## Install
+
+Download the latest `Dangle.dmg` from
+[Releases](https://github.com/Melvin0070/dangle/releases), drag Dangle to
+Applications, then **right-click → Open** the first time (builds are
+ad-hoc signed, not notarized). Or build it yourself:
+
+```bash
+git clone https://github.com/Melvin0070/dangle.git
+cd dangle
+make run
+```
+
+Requires macOS 14+. Building needs only the Xcode Command Line Tools.
+
+## Features
+
+- **Real physics** — a 12-point verlet rope stepped at a fixed 120Hz with
+  render interpolation, idle wind, cursor repulsion scaled to the charm's
+  size, drag, flick, stretch, and a velocity-driven 3D turn.
+- **A real 3D charm** — the `</>` is extruded SceneKit geometry (chunky
+  rounded capsules, dark chrome, gradient environment reflections, HDR bloom)
+  that banks and turns as it swings. A chrome bead rides the thread partway
+  up; for the 2D charm kinds it becomes a tiny twin of the charm.
+- **Charms arrive as data** — the app ships with `</>` alone. New charms are
+  published to this repository's [`charms/`](charms/) catalog; **Charm →
+  Get New Charms…** installs them in place. Or hang any emoji.
+- **Stays out of the way** — no Dock icon, no windows. Only the charm catches
+  your cursor; every other pixel clicks through.
+- **Re-hang anywhere** — drag the charm along the top edge.
+- **Notes** — click the charm and a native-vibrancy note springs in beneath
+  it for a few seconds (words from your team, reminders, anything), with the
+  author's monogram and a quiet counter. Notes can also appear on a timer.
+- **Summon and dismiss** — ⌃⌥D drops it in and lifts it away; ⌃⌥N shows the
+  next note; ⌃⌥B blesses the moment. All three remappable per pack.
+- **The bless ritual** — `open "dangle://bless"`: one confetti pop from
+  behind the charm — a port of
+  [canvas-confetti](https://github.com/catdad/canvas-confetti)'s particle
+  physics (ISC, Kiril Vatev): pop, decay, wobble, flutter. Wire it into a
+  deploy script or git hook.
+- **Scriptable** — `open "dangle://note?text=Ship%20it&from=CI"` shows any
+  message from any tool.
+- **Behind-windows mode** and **Launch at Login** from the menu bar.
+- **Native and light** — AppKit + Core Animation, zero dependencies, no
+  Electron, no WebView.
+
+## Performance
+
+Measured on an Apple silicon MacBook (Air 15", release build), as CPU-time
+deltas over wall time:
+
+| State | CPU (one core) |
+| --- | --- |
+| Dismissed, or screen asleep | 0% (display link paused) |
+| Dangling in the idle breeze | **~1.3%** |
+| Confetti bursts + notes + full-rate 3D | ~9% peak, while it lasts |
+
+How: the physics loop drops from 120Hz to 30Hz when nothing moves; the
+SceneKit view is swapped for a bitmap of its last frame and detached from the
+window whenever the charm is quiet (SceneKit re-renders every vsync merely by
+existing, ~6% CPU); scene writes below the visible-change threshold are
+skipped; and the display link pauses entirely when the charm is dismissed.
+The moment you move the cursor near the charm everything snaps back to full
+rate — physics stays identical either way because the fixed timestep just
+runs more steps per tick.
+
+## Charms
+
+The app ships with the `</>` charm. **Charm → Get New Charms…** fetches the
+[catalog](charms/index.json) from this repository and installs anything new —
+publishing a charm here makes it available to every user, no release needed.
+**Charm → Pick an Emoji…** hangs any emoji instead.
+
+A charm is a small JSON file:
+
+```json
+{
+  "id": "heart",
+  "name": "Heart",
+  "charm": {
+    "kind": "glyph3d",
+    "glyph": "heart",
+    "size": 96,
+    "gradientHexes": ["#C81E3C", "#FF5E78", "#FFB3C1"],
+    "accentHex": "#C81E3C",
+    "menuGlyph": "❤️"
+  }
+}
+```
+
+Want to make one? See [docs/making-charms.md](docs/making-charms.md) — PRs
+that add charms to the catalog are very welcome.
+
+## Packs
+
+A pack is one JSON file that fully describes what hangs from the screen and
+what it says: charm, thread, notes, hotkeys, timings. Choose **Edit Pack…**
+from the menu bar icon, edit, then **Reload Pack** — no rebuild needed.
+
+Full schema and examples in [docs/packs.md](docs/packs.md).
+
+### Give it as a gift
+
+The pack is what turns Dangle into a farewell present: collect notes from
+the team, put them in a pack, and build an app with the pack baked in:
+
+```bash
+cp -r Packs/farewell Packs/local/goodbye-ada   # start from the template
+$EDITOR Packs/local/goodbye-ada/pack.json      # real name, real notes
+make gift PACK=Packs/local/goodbye-ada/pack.json
+```
+
+That produces `dist/Dangle.dmg` with the pack bundled — hand it over, and
+every click of the charm says something kind. `Packs/local/` is gitignored,
+so the personal words never end up in a repository.
+
+## URL scheme
+
+| URL | Effect |
+| --- | --- |
+| `dangle://bless` | Summon if hidden, then one confetti pop |
+| `dangle://note` | Show the next pack note |
+| `dangle://note?text=…&from=…` | Show a custom note |
+| `dangle://charm?id=heart` | Hang an installed charm |
+| `dangle://charm?glyph=🍀` | Hang that emoji |
+| `dangle://charm` | Back to the pack's charm |
+| `dangle://toggle` | Summon or dismiss |
+| `dangle://summon` / `dangle://dismiss` | Explicit forms |
+| `dangle://debug` | Dump loop state to `/tmp/dangle-debug.txt` for bug reports |
+
+## Repository layout
+
+- [`Sources/DangleKit`](Sources/DangleKit) — the engine: physics
+  ([`VerletRope`](Sources/DangleKit/VerletRope.swift)), windowing, charm and
+  note rendering, packs, the charm store, hotkeys.
+- [`Sources/DangleApp`](Sources/DangleApp) — the menu bar shell.
+- [`Sources/DangleSnapshot`](Sources/DangleSnapshot) — renders a pack's
+  charm, note, and a mid-swing scene to PNGs, plus the app icon
+  (`make icon`) and physics diagnostics (`--windstats`).
+- [`Tests/DangleKitTests`](Tests/DangleKitTests) — physics invariants, pack
+  and charm decoding, hotkey parsing (`make test`).
+- [`Packs/`](Packs) — `default/` ships in the app, `farewell/` is the gift
+  template.
+- [`charms/`](charms) — the published charm catalog.
+
+## Contributing
+
+`make test` runs the suite, `make run` builds and launches, `make snapshot`
+renders the visuals for eyeballing changes. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE)
