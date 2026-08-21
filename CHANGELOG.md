@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.2.5
+
+Pre-1.0 cleanup pass — no user-facing feature changes, all internal:
+
+- Fixed a real race in charm-switching: picking a second charm while the
+  first one's put-away animation was still in flight could revert to the
+  stale first choice. Rapid re-picks now always resolve to the latest one.
+- Widened the put-away timing margin (0.5s → 0.65s) against the rope's
+  measured ~0.48s dip-and-lift, which left almost no room for frame jitter.
+- Removed two genuinely dead pieces of `VerletRope` API (`bow()`,
+  `onAnchorSlide`) that nothing in the app ever called or assigned.
+- Replaced a force-unwrap in `CharmStore`'s directory resolution with a
+  fallback, for consistency with how the rest of the codebase handles that
+  same system call.
+- Corrected stale comments and docs left behind by earlier changes: the
+  "one-line flip" description of the disabled idle-throttle overstated how
+  much of it survives in the code, a doc still described the clover with a
+  stem that was removed two releases ago, and a comment about cursor
+  proximity "pre-arming" frame rate no longer matched what the code does.
+- `.gitignore` now covers `.swiftpm/`/`xcuserdata/`; the pack-asset bundling
+  step in `make-app.sh` no longer picks up stray dotfiles like `.DS_Store`.
+
 ## 0.2.4
 
 - Redrew the `</>` charm: narrower, sharper `<`/`>` chevrons, a longer

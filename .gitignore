@@ -6,3 +6,5 @@ snapshots/
 .claude/
 design/
 Packs/local/
+.swiftpm/
+xcuserdata/

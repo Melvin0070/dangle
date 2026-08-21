@@ -91,11 +91,13 @@ time it's on screen, idle breeze included, so there's no step-down and no
 stutter. It fully sleeps (0%) only once dismissed and off-screen. That
 trade — CPU for a charm that never stutters — is deliberate: nobody keeps a
 charm animating on their screen for eight hours straight. The engine still
-paused the display link entirely on dismiss and skips SceneKit writes below
-the visible-change threshold; the old 30Hz idle throttle and
-sleep-to-a-bitmap-while-idle behavior are still in the code
-(`DangleEngine.tick`/`render`) as one-line flips if a future contributor
-wants that trade back.
+pauses the display link entirely on dismiss and skips SceneKit writes below
+the visible-change threshold. The 30Hz idle-rate toggle
+(`DangleEngine.tick`'s `setLinkRate` call) is a one-line flip back to
+`active: charmActiveNow || mouseNearCharm` if idle CPU ever needs trimming;
+the activity-gated sleep-to-a-bitmap-while-idle behavior was fully removed
+rather than flagged off, so bringing that back specifically means re-adding
+real logic to `render()`, not flipping a switch.
 
 ## Charms
 

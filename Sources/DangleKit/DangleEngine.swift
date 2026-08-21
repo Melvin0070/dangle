@@ -420,24 +420,35 @@ public final class DangleEngine: NSObject {
         }
     }
 
-    /// Roughly VerletRope's private dip (0.18s) plus lift (0.3s) — long
-    /// enough that the old charm is off screen before the new one applies.
-    private static let charmSwitchDelay: TimeInterval = 0.5
+    /// VerletRope's private dip (0.18s) plus lift (0.3s) reach `isFullyHidden`
+    /// in ~0.48s; the extra margin covers frame jitter so the old charm is
+    /// reliably off screen before the new one applies.
+    private static let charmSwitchDelay: TimeInterval = 0.65
+    private var pendingCharmSwitch: DispatchWorkItem?
+    private var charmSwitchInFlight = false
 
     /// A charm change reads as the old one leaving and the new one
     /// arriving, not an instant swap mid-air: put away first if currently
-    /// dangling, apply the change, then drop back in.
+    /// dangling, apply the change, then drop back in. Picking again before
+    /// that finishes re-times the drop from the newer choice instead of
+    /// letting the stale one apply and re-summon over it.
     private func switchCharm(_ apply: @escaping () -> Void) {
-        guard rope.dangled else {
+        let wasVisible = rope.dangled || charmSwitchInFlight
+        pendingCharmSwitch?.cancel()
+        guard wasVisible else {
             apply()
             return
         }
-        dismiss()
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.charmSwitchDelay) { [weak self] in
+        charmSwitchInFlight = true
+        dismiss()  // no-op if a prior pick already dismissed it
+        let work = DispatchWorkItem { [weak self] in
             guard let self else { return }
+            self.charmSwitchInFlight = false
             apply()
             self.summon(withNote: false)
         }
+        pendingCharmSwitch = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.charmSwitchDelay, execute: work)
     }
 
     // MARK: Notes
@@ -577,8 +588,8 @@ public final class DangleEngine: NSObject {
         let inStrip = p.y >= 0 && p.y <= stripHeight
         rope.mouse = inStrip ? p : nil
 
-        // A nearby cursor pre-arms full frame rate so the lean-away and
-        // grab feel instant.
+        // Distance-to-charm for the dumpDebug diagnostic only — rendering
+        // runs at full rate regardless (see tick()'s setLinkRate call).
         if inStrip, rope.dangled {
             let c = rope.charmCenter
             mouseNearCharm = hypot(p.x - c.x, p.y - c.y) < 260

@@ -71,7 +71,8 @@ public final class CharmStore {
             self.directory = directory
         } else {
             let appSupport = FileManager.default.urls(
-                for: .applicationSupportDirectory, in: .userDomainMask).first!
+                for: .applicationSupportDirectory, in: .userDomainMask).first
+                ?? FileManager.default.temporaryDirectory
             self.directory = appSupport.appendingPathComponent("Dangle/Charms")
         }
         self.indexURL = indexURL ?? Self.defaultIndexURL

@@ -37,12 +37,14 @@ Command Line Tools-only machine; on a full Xcode install or CI, plain
   120Hz physics, live SceneKit — for as long as it's on screen, so there's
   no idle step-down and no stutter; it only sleeps to 0% once dismissed and
   off-screen. That trades CPU (~12% of a core while dangling) for a charm
-  that never visibly lags. The old idle-throttle path (30Hz tick,
-  sleep-to-a-bitmap while quiet) is still in `DangleEngine.tick`/`render` as
-  one-line flips — see the comments there — for whoever wants that
-  trade-off back. If your change touches the render loop, measure before
-  and after (`ps -o cputime -p <pid>` deltas over a minute is enough) and
-  put the numbers in the PR either way.
+  that never visibly lags. The 30Hz idle-rate toggle is a one-line flip back
+  in `DangleEngine.tick`'s `setLinkRate` call (see the comment there); the
+  old sleep-to-a-bitmap-while-idle behavior was removed outright rather than
+  flagged off, so restoring that specifically means writing the
+  activity-gated condition back into `render()`, not flipping a switch. If
+  your change touches the render loop, measure before and after
+  (`ps -o cputime -p <pid>` deltas over a minute is enough) and put the
+  numbers in the PR either way.
 - **Physics changes need the numbers too.** `swift run DangleSnapshot --windstats`
   prints idle-breeze endpoint speeds; the engine's sleep thresholds are set
   from that data, and `make test` pins the assumption down.

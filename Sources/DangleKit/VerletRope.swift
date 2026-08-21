@@ -57,8 +57,6 @@ public final class VerletRope {
     public var dragTarget: CGPoint?
     /// Cursor position in rope coordinates; nil when the cursor is elsewhere.
     public var mouse: CGPoint?
-    /// Called when a drag along the top edge slides the anchor.
-    public var onAnchorSlide: ((CGFloat) -> Void)?
 
     private var lastMouse: CGPoint?
     private var mouseVX: CGFloat = 0
@@ -131,11 +129,6 @@ public final class VerletRope {
     public func flick() {
         let sign: CGFloat = random() < 0.5 ? 1 : -1
         pts[tuning.count - 1].px += (18 + random() * 8) * sign
-    }
-
-    /// A little downward dip-and-spring, like the charm taking a bow.
-    public func bow() {
-        pts[tuning.count - 1].py -= 9
     }
 
     /// End-point velocity in points per physics step.
@@ -267,7 +260,6 @@ public final class VerletRope {
         if dragging, let target = dragTarget, target.y < 60 {
             anchorX += (target.x - anchorX) * 0.12
             anchorX = min(max(anchorX, minAnchorX), maxAnchorX)
-            onAnchorSlide?(anchorX)
         }
 
         // Constraint relaxation.

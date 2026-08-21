@@ -47,7 +47,7 @@ extruded):
 
 - `</>` — the code mark
 - `heart` — a lacquer heart
-- `clover` — four heart-leaves and a stem
+- `clover` — four heart-leaves, tips meeting at the center, no stem
 
 Any other `glyph` string is extruded as heavy monospaced type, which works
 for single characters (`&`, `λ`, `∞`) and gets worse the longer the string.

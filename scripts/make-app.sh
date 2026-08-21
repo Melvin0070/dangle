@@ -30,7 +30,8 @@ cp "$PACK" "$APP/Contents/Resources/pack.json"
 PACK_DIR="$(dirname "$PACK")"
 shopt -s nullglob
 for asset in "$PACK_DIR"/*; do
-    [[ "$asset" == *.json || ! -f "$asset" ]] && continue
+    base="$(basename "$asset")"
+    [[ "$asset" == *.json || "$base" == .* || ! -f "$asset" ]] && continue
     cp "$asset" "$APP/Contents/Resources/"
 done
 shopt -u nullglob
