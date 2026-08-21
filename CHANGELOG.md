@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.2
+
+- Corrected the `</>` chevron angle from 0.2.1: narrower and more pointed,
+  not wider — 0.2.1 opened the angle in the wrong direction.
+- Changing charms (menu, `Pick an Emoji…`, or `dangle://charm`) now puts
+  the current charm away first, then drops the new one back in, instead of
+  swapping it instantly mid-air.
+
 ## 0.2.1
 
 - The `</>` charm's chevrons are wider and more open — less pointy, more

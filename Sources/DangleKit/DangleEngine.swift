@@ -405,17 +405,39 @@ public final class DangleEngine: NSObject {
         guard id.hasPrefix("emoji:") || CharmStore.shared.charm(id: id) != nil else {
             return
         }
-        defaults.set(id, forKey: Keys.charmID)
-        effectivePack = resolveEffectivePack()
-        applyCharmStyle(effectivePack)
-        rope.flick()
+        switchCharm {
+            self.defaults.set(id, forKey: Keys.charmID)
+            self.effectivePack = self.resolveEffectivePack()
+            self.applyCharmStyle(self.effectivePack)
+        }
     }
 
     public func clearCharmOverride() {
-        defaults.removeObject(forKey: Keys.charmID)
-        effectivePack = resolveEffectivePack()
-        applyCharmStyle(effectivePack)
-        rope.flick()
+        switchCharm {
+            self.defaults.removeObject(forKey: Keys.charmID)
+            self.effectivePack = self.resolveEffectivePack()
+            self.applyCharmStyle(self.effectivePack)
+        }
+    }
+
+    /// Roughly VerletRope's private dip (0.18s) plus lift (0.3s) — long
+    /// enough that the old charm is off screen before the new one applies.
+    private static let charmSwitchDelay: TimeInterval = 0.5
+
+    /// A charm change reads as the old one leaving and the new one
+    /// arriving, not an instant swap mid-air: put away first if currently
+    /// dangling, apply the change, then drop back in.
+    private func switchCharm(_ apply: @escaping () -> Void) {
+        guard rope.dangled else {
+            apply()
+            return
+        }
+        dismiss()
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.charmSwitchDelay) { [weak self] in
+            guard let self else { return }
+            apply()
+            self.summon(withNote: false)
+        }
     }
 
     // MARK: Notes

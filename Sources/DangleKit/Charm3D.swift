@@ -143,9 +143,9 @@ public enum Charm3D {
         // Proportions: the slash runs taller than the chevrons (the classic
         // code-mark silhouette) and keeps clear air on both sides — its edge
         // never touches the chevron apexes. chevH:chevW controls the chevron
-        // angle — taller relative to narrower reads as more open, less pointy.
-        let chevH = s * 0.34
-        let chevW = s * 0.20
+        // angle — a smaller ratio reads as a narrower, more pointed V.
+        let chevH = s * 0.20
+        let chevW = s * 0.28
         let thick = s * 0.15
         let lx = -0.43 * s
         addCapsule(from: CGPoint(x: lx - chevW / 2, y: 0),
