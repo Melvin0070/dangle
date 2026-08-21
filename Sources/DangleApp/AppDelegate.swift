@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        CharmStore.shared.seedBundledCharms()
         engine.start()
         setUpStatusItem()
         setUpHotKeys()
@@ -183,25 +184,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: Charm menu
 
-    /// The charm list is data, not code: the pack charm, whatever is
-    /// installed in the CharmStore, any emoji, and a way to get more.
+    /// The charm list is data, not code: whatever is installed in the
+    /// CharmStore, any emoji, and a way to get more. "Pack Charm" is not a
+    /// separate category — it's a fallback item, shown only when the
+    /// active pack's own charm isn't one already in that list (true for
+    /// the default and farewell packs, which both hang the bundled `</>`;
+    /// a bespoke pack with a charm of its own needs it).
     private func rebuildCharmMenu(_ menu: NSMenu) {
         menu.removeAllItems()
         let override = engine.charmOverrideID
+        let installed = CharmStore.shared.installedCharms()
+        let packCharmIsBundled = installed.contains { $0.charm == engine.pack.charm }
+        let activeID = override ?? (packCharmIsBundled
+            ? installed.first(where: { $0.charm == engine.pack.charm })?.id
+            : nil)
 
-        let packCharm = NSMenuItem(title: "Pack Charm",
-                                   action: #selector(usePackCharm), keyEquivalent: "")
-        packCharm.target = self
-        packCharm.state = override == nil ? .on : .off
-        menu.addItem(packCharm)
-        menu.addItem(.separator())
+        if !packCharmIsBundled {
+            let packCharm = NSMenuItem(title: "Pack Charm",
+                                       action: #selector(usePackCharm), keyEquivalent: "")
+            packCharm.target = self
+            packCharm.state = override == nil ? .on : .off
+            menu.addItem(packCharm)
+        }
 
-        for charm in CharmStore.shared.installedCharms() {
+        for charm in installed {
             let item = NSMenuItem(title: charm.name,
                                   action: #selector(pickInstalledCharm(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = charm.id
-            item.state = override == charm.id ? .on : .off
+            item.state = charm.id == activeID ? .on : .off
             menu.addItem(item)
         }
 

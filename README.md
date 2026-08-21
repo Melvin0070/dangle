@@ -16,9 +16,10 @@ properly when grabbed or flicked — and everything except the charm itself
 clicks straight through.
 
 Dangle is an open-source *engine*: the charm, the thread, and the notes it
-shows all come from data. Hang the `</>` while you code, drop a `pack.json`
-in to turn it into a farewell gift or a team talisman, and pick up new charms
-from the menu bar as they're published — no app update needed.
+shows all come from data. Three charms ship with the app — `</>`, Heart, and
+Four-Leaf Clover — and pick up whatever's published after that from the menu
+bar, no app update needed. Drop a `pack.json` in to turn it into a farewell
+gift or a team talisman.
 
 Inspired by (and in admiration of) Karthik Mahadevan's
 [Lucky Dangle](https://luckydangle.app) and Vercel's
@@ -50,9 +51,10 @@ Requires macOS 14+. Building needs only the Xcode Command Line Tools.
   rounded capsules, dark chrome, gradient environment reflections, HDR bloom)
   that banks and turns as it swings. A chrome bead rides the thread partway
   up; for the 2D charm kinds it becomes a tiny twin of the charm.
-- **Charms arrive as data** — the app ships with `</>` alone. New charms are
-  published to this repository's [`charms/`](charms/) catalog; **Charm →
-  Get New Charms…** installs them in place. Or hang any emoji.
+- **Charms arrive as data** — `</>`, Heart, and Four-Leaf Clover ship with
+  the app, no fetch needed. Whatever's published after that to this
+  repository's [`charms/`](charms/) catalog installs from **Charm → Get New
+  Charms…**. Or hang any emoji.
 - **Stays out of the way** — no Dock icon, no windows. Only the charm catches
   your cursor; every other pixel clicks through.
 - **Re-hang anywhere** — drag the charm along the top edge.
@@ -97,12 +99,12 @@ wants that trade back.
 
 ## Charms
 
-The app ships with the `</>` charm alone. Two more are published in the
-catalog and available to everyone: **Heart** and **Four-Leaf Clover**.
-**Charm → Get New Charms…** fetches the [catalog](charms/index.json) from
-this repository and installs anything new — publishing a charm here makes
-it available to every user, no release needed. **Charm → Pick an Emoji…**
-hangs any emoji instead.
+Three charms ship with the app — **`</>`**, **Heart**, and **Four-Leaf
+Clover** — installed at first launch, no network fetch required. They're
+equal citizens in the Charm menu; none of them is more "default" than the
+others. Whatever gets published to the [catalog](charms/index.json) after
+that installs from **Charm → Get New Charms…**, no app release needed.
+**Charm → Pick an Emoji…** hangs any emoji instead.
 
 A charm is a small JSON file, with its own notes if it wants them:
 

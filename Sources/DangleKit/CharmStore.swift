@@ -93,6 +93,27 @@ public final class CharmStore {
         installedCharms().first { $0.id == id }
     }
 
+    /// Copies any charms bundled with the app (Contents/Resources/Charms/)
+    /// into the installed directory, skipping ones already there. Called
+    /// once at startup so the default charm set is available immediately —
+    /// no "Get New Charms…" fetch needed for what ships with the app.
+    public func seedBundledCharms() {
+        guard let resourceURL = Bundle.main.resourceURL else { return }
+        let bundledDir = resourceURL.appendingPathComponent("Charms")
+        let fm = FileManager.default
+        guard let files = try? fm.contentsOfDirectory(at: bundledDir,
+                                                       includingPropertiesForKeys: nil)
+        else { return }
+        let installedIDs = Set(installedCharms().map(\.id))
+        for url in files where url.pathExtension == "json" {
+            guard let data = try? Data(contentsOf: url),
+                  let charm = try? JSONDecoder().decode(Charm.self, from: data),
+                  !installedIDs.contains(charm.id)
+            else { continue }
+            try? install(charm)
+        }
+    }
+
     public func install(_ charm: Charm) throws {
         guard Charm.isValidID(charm.id) else {
             throw CocoaError(.fileWriteInvalidFileName)

@@ -1,0 +1,19 @@
+{
+  "id": "code",
+  "name": "</>",
+  "charm": {
+    "kind": "glyph3d",
+    "glyph": "</>",
+    "size": 96,
+    "gradientHexes": ["#E8590C", "#FFB86B", "#FF5E78"],
+    "accentHex": "#E8590C"
+  },
+  "notes": [
+    "Ship it.",
+    "It works on my machine, which is the only machine that matters right now.",
+    "Give it a flick before you push to main.",
+    "Somewhere, a test you haven't written yet is about to fail.",
+    "The bug was never in the code you were looking at.",
+    "Comment less. Name things better."
+  ]
+}

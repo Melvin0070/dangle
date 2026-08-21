@@ -1,8 +1,9 @@
 # Making charms
 
-A charm is one JSON file. Publishing it to this repository's `charms/`
-catalog makes it installable by every Dangle user from **Charm → Get New
-Charms…** — no app release involved.
+A charm is one JSON file. `</>`, Heart, and Four-Leaf Clover ship bundled
+with the app; publishing a new one to this repository's `charms/` catalog
+makes it installable by every Dangle user from **Charm → Get New Charms…**
+— no app release involved.
 
 ## The file
 

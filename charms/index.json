@@ -1,5 +1,6 @@
 {
   "charms": [
+    { "id": "code", "name": "</>", "file": "code.json" },
     { "id": "heart", "name": "Heart", "file": "heart.json" },
     { "id": "clover", "name": "Four-Leaf Clover", "file": "clover.json" }
   ]

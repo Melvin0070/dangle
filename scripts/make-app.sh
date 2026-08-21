@@ -34,6 +34,15 @@ for asset in "$PACK_DIR"/*; do
     cp "$asset" "$APP/Contents/Resources/"
 done
 shopt -u nullglob
+
+# Bundle the default charm catalog so it's available offline at first
+# launch — no "Get New Charms…" fetch needed for what ships with the app.
+mkdir -p "$APP/Contents/Resources/Charms"
+for charm in charms/*.json; do
+    [ "$(basename "$charm")" = "index.json" ] && continue
+    cp "$charm" "$APP/Contents/Resources/Charms/"
+done
+
 if [ -f Assets/AppIcon.icns ]; then
     cp Assets/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 fi

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.3
+
+- All three charms — `</>`, Heart, Four-Leaf Clover — now install at first
+  launch. They're bundled with the app (`Contents/Resources/Charms/`) and
+  seeded into the CharmStore on startup, so nothing needs fetching from
+  **Get New Charms…** just to have the default set. `</>` also gained its
+  own notes, same as the other two.
+- The Charm menu no longer sets "Pack Charm" apart with its own section: it
+  only appears at all when the active pack's charm isn't one of the
+  installed ones (a genuinely custom charm), and then it's just another row
+  in the same list, not a separated special case.
+
 ## 0.2.2
 
 - Corrected the `</>` chevron angle from 0.2.1: narrower and more pointed,
