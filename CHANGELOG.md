@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0
 
 - **Your pack now survives replacing the app.** On first run Dangle copies the
   bundled pack to `~/Library/Application Support/Dangle/pack.json` and never
