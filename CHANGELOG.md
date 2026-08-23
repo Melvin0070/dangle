@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.1
 
 - A `pathData` charm is now covered by a test that it still extrudes from
   its path rather than silently degrading to its glyph name as text —
