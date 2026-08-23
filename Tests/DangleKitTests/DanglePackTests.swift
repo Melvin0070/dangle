@@ -201,11 +201,14 @@ import AppKit
         #expect(!fm.fileExists(atPath: dest.path))
     }
 
-    /// Everything a user owns — their pack and their installed charms — lives
-    /// at these two paths and nowhere else. Renaming the app, restructuring
-    /// the code, or tidying the directory layout would strand a pack someone
-    /// already has, in a way nothing else here would catch. Change these only
-    /// with a migration that moves the old location forward.
+    /// These two paths are an on-disk contract, not an implementation
+    /// detail: they are where someone else's pack and charms already live.
+    ///
+    /// This is a change-detector rather than a behavioural test — it asserts
+    /// a literal against a literal, and its only job is to make a rename
+    /// impossible to land unnoticed. It is not protection. Moving either
+    /// path still needs a migration that carries the old location forward,
+    /// written at the point there is finally an old location to carry.
     @Test func theLocationsAUserOwnsDoNotMove() throws {
         let pack = try #require(DanglePack.userPackURL)
         #expect(pack.pathComponents.suffix(2) == ["Dangle", "pack.json"])

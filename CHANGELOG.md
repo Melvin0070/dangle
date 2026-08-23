@@ -2,10 +2,13 @@
 
 ## Unreleased
 
-- Two more guards for packs already in the wild: the Application Support
-  locations a user owns are pinned by a test, and a `pathData` charm is
-  checked to still extrude from its path rather than silently degrading to
-  its glyph name as text.
+- A `pathData` charm is now covered by a test that it still extrudes from
+  its path rather than silently degrading to its glyph name as text —
+  including the negative case, so the assertion cannot pass vacuously.
+- The two Application Support locations a user owns are pinned by a test.
+  That is a change-detector, not a mechanism: it exists to stop a rename
+  going in unnoticed, and moving either path still needs a migration
+  written at the time.
 - `CharmStore.defaultDirectory` is public, so the installed-charms location
   is stated once instead of being computed inline.
 
