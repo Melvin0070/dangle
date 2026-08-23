@@ -201,6 +201,26 @@ import AppKit
         #expect(!fm.fileExists(atPath: dest.path))
     }
 
+    /// Everything a user owns — their pack and their installed charms — lives
+    /// at these two paths and nowhere else. Renaming the app, restructuring
+    /// the code, or tidying the directory layout would strand a pack someone
+    /// already has, in a way nothing else here would catch. Change these only
+    /// with a migration that moves the old location forward.
+    @Test func theLocationsAUserOwnsDoNotMove() throws {
+        let pack = try #require(DanglePack.userPackURL)
+        #expect(pack.pathComponents.suffix(2) == ["Dangle", "pack.json"])
+
+        let charms = CharmStore.defaultDirectory
+        #expect(charms.pathComponents.suffix(2) == ["Dangle", "Charms"])
+
+        // Both under Application Support, which is what survives replacing
+        // the app — not Caches, not the bundle, not a temp directory.
+        let appSupport = try #require(FileManager.default.urls(
+            for: .applicationSupportDirectory, in: .userDomainMask).first)
+        #expect(pack.path.hasPrefix(appSupport.path))
+        #expect(charms.path.hasPrefix(appSupport.path))
+    }
+
     @Test func loadFailsOnMissingFile() {
         #expect(throws: (any Error).self) {
             _ = try DanglePack.load(from: URL(fileURLWithPath: "/nonexistent/pack.json"))

@@ -62,19 +62,22 @@ public final class CharmStore {
         return URL(string: "https://raw.githubusercontent.com/Melvin0070/dangle/main/charms/index.json")!
     }
 
+    /// Where installed charms live. Alongside `DanglePack.userPackURL`, this
+    /// is the whole of what a user owns; both outlive the app that wrote
+    /// them, so neither path may change without stranding what is there.
+    public static var defaultDirectory: URL {
+        let appSupport = FileManager.default.urls(
+            for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        return appSupport.appendingPathComponent("Dangle/Charms")
+    }
+
     private let directory: URL
     private let indexURL: URL
     private var isFetching = false
 
     public init(directory: URL? = nil, indexURL: URL? = nil) {
-        if let directory {
-            self.directory = directory
-        } else {
-            let appSupport = FileManager.default.urls(
-                for: .applicationSupportDirectory, in: .userDomainMask).first
-                ?? FileManager.default.temporaryDirectory
-            self.directory = appSupport.appendingPathComponent("Dangle/Charms")
-        }
+        self.directory = directory ?? Self.defaultDirectory
         self.indexURL = indexURL ?? Self.defaultIndexURL
     }
 

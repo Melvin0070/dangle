@@ -94,6 +94,31 @@ import SceneKit
                 == NSColor(hex: "#123456"))
     }
 
+    /// A charm whose shape arrived as `pathData` must be extruded from that
+    /// path. If shape-as-data ever stopped working, the charm would fall back
+    /// to extruding its glyph *name* as text — a pack asking for "esfera"
+    /// would hang the word "esfera" — and it would do so silently. Charms
+    /// that exist only as path data have no other geometry to fall back on.
+    @Test func aPathDataCharmIsExtrudedFromItsPath() throws {
+        var pack = DanglePack.fallback
+        pack.charm = DanglePack.CharmSpec(
+            kind: .glyph3d,
+            // A name with no bespoke geometry: only the path can save it.
+            glyph: "no-such-shape", size: 96, gradientHexes: nil,
+            accentHex: "#C8A15A",
+            pathData: "M 0 -40 A 40 40 0 1 0 0 40 A 30 30 0 1 1 0 -40 Z")
+
+        let geometry = Charm3D.makeScene(pack: pack, viewSide: 200).glyphNode.geometry
+        #expect(geometry is SCNShape, "path data no longer builds the shape")
+        #expect(!(geometry is SCNText), "the charm degraded to its name as text")
+
+        // The same charm without its path really does degrade to text, so the
+        // assertion above is discriminating rather than always true.
+        pack.charm.pathData = nil
+        let degraded = Charm3D.makeScene(pack: pack, viewSide: 200).glyphNode.geometry
+        #expect(degraded is SCNText)
+    }
+
     /// Names map to exactly one shape. Two cases claiming the same name would
     /// make `BespokeGlyph(name:)` pick by declaration order and silently hang
     /// the wrong geometry.

@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Two more guards for packs already in the wild: the Application Support
+  locations a user owns are pinned by a test, and a `pathData` charm is
+  checked to still extrude from its path rather than silently degrading to
+  its glyph name as text.
+- `CharmStore.defaultDirectory` is public, so the installed-charms location
+  is stated once instead of being computed inline.
+
 ## 0.5.0
 
 - **Your pack now survives replacing the app.** On first run Dangle copies the
