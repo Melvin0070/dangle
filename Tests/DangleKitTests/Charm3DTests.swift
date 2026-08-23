@@ -1,6 +1,7 @@
 import Testing
 import Foundation
 import AppKit
+import SceneKit
 @testable import DangleKit
 
 @Suite struct Charm3DTests {
@@ -47,13 +48,62 @@ import AppKit
     @Test func everyBespokeGlyphHasAPath() {
         // The catalog guard trusts this set; an entry with no case in
         // makeScene would hang as extruded text and still pass that test.
-        #expect(Charm3D.bespokeGlyphs == ["</>", "code", "heart", "clover"])
+        #expect(Charm3D.BespokeGlyph.allNames == ["</>", "code", "heart", "clover"])
         #expect(!Charm3D.codeGlyphPath(size: 96).isEmpty)
         #expect(!Charm3D.heartPath(size: 96).isEmpty)
         #expect(!Charm3D.cloverPath(size: 96).isEmpty)
-        for glyph in Charm3D.bespokeGlyphs {
+        for glyph in Charm3D.BespokeGlyph.allNames {
             #expect(!Charm3D.bespokePath(named: glyph, size: 96).isEmpty,
                     "\(glyph) is listed as bespoke but has no path")
+        }
+    }
+
+    /// A bespoke shape's depth, chamfer and finish are defaults a charm may
+    /// state over, the same as a `pathData` charm can. Nothing shipped sets
+    /// them, so this is about the two paths behaving alike rather than about
+    /// any charm that exists today.
+    @Test func aBespokeCharmCanStateItsOwnFinish() throws {
+        var spec = DanglePack.CharmSpec(kind: .glyph3d, glyph: "heart",
+                                        size: 96, gradientHexes: nil,
+                                        accentHex: "#C81E3C")
+        var pack = DanglePack.fallback
+        pack.charm = spec
+
+        func shape(_ pack: DanglePack) -> SCNShape? {
+            Charm3D.makeScene(pack: pack, viewSide: 200).glyphNode.geometry as? SCNShape
+        }
+
+        // SceneKit stores these as Float, so compare with a tolerance.
+        func isNear(_ a: CGFloat, _ b: CGFloat) -> Bool { abs(a - b) < 0.0001 }
+
+        // Untouched, the heart keeps its built-in lacquer and extrusion.
+        let stock = try #require(shape(pack))
+        #expect(isNear(stock.extrusionDepth, 15))
+        #expect(isNear(stock.chamferRadius, 2.8))
+        #expect(stock.materials.first?.diffuse.contents as? NSColor
+                == NSColor(hex: "#C81E3C"))
+
+        spec.fillHex = "#123456"
+        spec.depth = 30
+        spec.chamfer = 1
+        pack.charm = spec
+        let overridden = try #require(shape(pack))
+        #expect(isNear(overridden.extrusionDepth, 30))
+        #expect(isNear(overridden.chamferRadius, 1))
+        #expect(overridden.materials.first?.diffuse.contents as? NSColor
+                == NSColor(hex: "#123456"))
+    }
+
+    /// Names map to exactly one shape. Two cases claiming the same name would
+    /// make `BespokeGlyph(name:)` pick by declaration order and silently hang
+    /// the wrong geometry.
+    @Test func bespokeNamesAreUnambiguous() {
+        let all = Charm3D.BespokeGlyph.allCases.flatMap(\.names)
+        #expect(all.count == Set(all).count, "two shapes answer to the same name")
+        for shape in Charm3D.BespokeGlyph.allCases {
+            for name in shape.names {
+                #expect(Charm3D.BespokeGlyph(name: name) == shape)
+            }
         }
     }
 }

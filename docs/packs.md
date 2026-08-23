@@ -9,9 +9,21 @@ says. The app resolves packs in this order:
 3. The pack bundled inside the app
 4. A built-in fallback (`</>` with one note)
 
-Choose **Edit Pack…** from the menu bar icon and Dangle copies the active
-pack to Application Support and reveals it. Edit, then choose **Reload
-Pack** — no rebuild needed (hotkey changes apply on next launch).
+Choose **Edit Pack…** from the menu bar icon and Dangle reveals your copy in
+Application Support. Edit, then choose **Reload Pack** — no rebuild needed
+(hotkey changes apply on next launch).
+
+On its very first run Dangle copies the bundled pack to
+`~/Library/Application Support/Dangle/pack.json`, and then never writes there
+again. That copy is yours: replacing or updating Dangle.app cannot take it
+away, and a later version's bundled pack will not overwrite it even if you
+never edited it. This matters most for a pack someone was *given* — the app
+is disposable, the pack is a keepsake. The trade is that improvements to the
+default pack do not reach an existing install; delete your copy to take the
+new one.
+
+A pack that fails to parse is skipped with a line on stderr naming the file
+and the reason, rather than silently falling back to the stock pack.
 
 ## Schema
 

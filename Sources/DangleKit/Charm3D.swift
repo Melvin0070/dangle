@@ -15,22 +15,69 @@ public enum Charm3D {
         public let viewSide: CGFloat
     }
 
-    /// Glyphs with bespoke geometry. Anything else is extruded as type, which
-    /// only reads for one or two characters — a longer string here is almost
-    /// always a shape nobody built, hung as the literal word instead.
-    public static let bespokeGlyphs: Set<String> = [
-        "</>", "code", "heart", "clover",
-    ]
+    /// A shape built in code rather than shipped as `pathData`. Anything a
+    /// pack names that is not one of these is extruded as type, which only
+    /// reads for one or two characters — a longer string is almost always a
+    /// shape nobody built, hung as the literal word instead.
+    ///
+    /// One case per shape, owning its names, its geometry and its finish, so
+    /// adding a shape is one case and the compiler finds the rest. Most new
+    /// shapes should be `pathData` in a charm file and need nothing here.
+    public enum BespokeGlyph: CaseIterable, Sendable {
+        case code
+        case heart
+        case clover
+
+        /// Every name a pack may use for this shape.
+        public var names: [String] {
+            switch self {
+            case .code: ["</>", "code"]
+            case .heart: ["heart"]
+            case .clover: ["clover"]
+            }
+        }
+
+        public init?(name: String) {
+            guard let match = Self.allCases.first(where: { $0.names.contains(name) })
+            else { return nil }
+            self = match
+        }
+
+        /// Every name any bespoke shape answers to.
+        public static var allNames: Set<String> {
+            Set(allCases.flatMap(\.names))
+        }
+
+        func path(size: CGFloat) -> NSBezierPath {
+            switch self {
+            case .code: codeGlyphPath(size: size)
+            case .heart: heartPath(size: size)
+            case .clover: cloverPath(size: size)
+            }
+        }
+
+        var extrusion: (depth: CGFloat, chamfer: CGFloat) {
+            switch self {
+            case .code: (16, 2.6)
+            case .heart: (15, 2.8)
+            case .clover: (13, 2.4)
+            }
+        }
+
+        /// A shape that wants its own colour instead of the default chrome.
+        var lacquer: (hex: String, metalness: Double, roughness: Double)? {
+            switch self {
+            case .code: nil
+            case .heart: ("#C81E3C", 0.9, 0.22)
+            case .clover: ("#2F9E44", 0.85, 0.28)
+            }
+        }
+    }
 
     /// The path behind a bespoke glyph name, so tooling can export one as a
     /// starting point for a charm's own `pathData`. Empty for anything else.
     public static func bespokePath(named glyph: String, size: CGFloat) -> NSBezierPath {
-        switch glyph {
-        case "</>", "code": return codeGlyphPath(size: size)
-        case "heart": return heartPath(size: size)
-        case "clover": return cloverPath(size: size)
-        default: return NSBezierPath()
-        }
+        BespokeGlyph(name: glyph)?.path(size: size) ?? NSBezierPath()
     }
 
     /// Fits a glyph of the given bounding box to the charm size, and works
@@ -139,8 +186,10 @@ public enum Charm3D {
                 // Bad path data is not worth crashing over, and not worth
                 // hiding either: hang the fallback so the charm reads as
                 // visibly wrong rather than quietly missing.
-                let shape = SCNShape(path: codeGlyphPath(size: size), extrusionDepth: 16)
-                shape.chamferRadius = 2.6
+                let fallback = BespokeGlyph.code
+                let shape = SCNShape(path: fallback.path(size: size),
+                                     extrusionDepth: fallback.extrusion.depth)
+                shape.chamferRadius = fallback.extrusion.chamfer
                 geometry = shape
             }
             applyMaterialOverrides(pack.charm, to: material)
@@ -148,27 +197,22 @@ public enum Charm3D {
                           size: size, fixedSide: fixedSide)
         }
 
-        switch pack.charm.glyph {
-        case "</>", "code":
-            // A bespoke chunky </> beats any typeface in 3D.
-            let shape = SCNShape(path: codeGlyphPath(size: size), extrusionDepth: 16)
-            shape.chamferRadius = 2.6
+        if let bespoke = BespokeGlyph(name: pack.charm.glyph) {
+            // Built-in geometry beats any typeface in 3D. The shape's own
+            // depth, chamfer and finish are defaults, not fixtures: a charm
+            // that states them wins, exactly as it does for `pathData`.
+            let shape = SCNShape(
+                path: bespoke.path(size: size),
+                extrusionDepth: CGFloat(pack.charm.depth ?? Double(bespoke.extrusion.depth)))
+            shape.chamferRadius = CGFloat(pack.charm.chamfer ?? Double(bespoke.extrusion.chamfer))
             geometry = shape
-        case "heart":
-            let shape = SCNShape(path: heartPath(size: size), extrusionDepth: 15)
-            shape.chamferRadius = 2.8
-            geometry = shape
-            material.diffuse.contents = NSColor(hex: "#C81E3C")
-            material.metalness.contents = 0.9
-            material.roughness.contents = 0.22
-        case "clover":
-            let shape = SCNShape(path: cloverPath(size: size), extrusionDepth: 13)
-            shape.chamferRadius = 2.4
-            geometry = shape
-            material.diffuse.contents = NSColor(hex: "#2F9E44")
-            material.metalness.contents = 0.85
-            material.roughness.contents = 0.28
-        default:
+            if let lacquer = bespoke.lacquer {
+                material.diffuse.contents = NSColor(hex: lacquer.hex)
+                material.metalness.contents = lacquer.metalness
+                material.roughness.contents = lacquer.roughness
+            }
+            applyMaterialOverrides(pack.charm, to: material)
+        } else {
             let text = SCNText(string: pack.charm.glyph, extrusionDepth: 15)
             text.font = NSFont.monospacedSystemFont(ofSize: size, weight: .black)
             text.flatness = 0.05

@@ -38,7 +38,7 @@ makes it installable by every Dangle user from **Charm → Get New Charms…**
 | `charm.menuGlyph` | Emoji or short text for the menu bar while this charm hangs. |
 | `charm.pathData` | An SVG `d` attribute. When present it *is* the shape and `glyph` is ignored. See below. |
 | `charm.pathEvenOdd` | Fill `pathData` by the even-odd rule. Design tools write `fill-rule="evenodd"` for most compound shapes. |
-| `charm.fillHex` | Material color. Default is the dark chrome. |
+| `charm.fillHex` | Material color. Default is the dark chrome, or a bespoke glyph's own lacquer. |
 | `charm.metalness` | 0–1, default 1. |
 | `charm.roughness` | 0–1, default 0.2. |
 | `charm.depth` | Extrusion depth in points, default 13. |
@@ -50,8 +50,8 @@ makes it installable by every Dangle user from **Charm → Get New Charms…**
 **`glyph3d`** — a real extruded shape with chamfered edges, PBR chrome, and
 reflections from the pack gradient. Some glyphs have bespoke geometry built
 from rounded capsules, stroked ellipses, and bezier curves (typeset text
-never looks right extruded) — `Charm3D.bespokeGlyphs` is the authoritative
-list:
+never looks right extruded) — `Charm3D.BespokeGlyph` is the authoritative
+list, one case per shape:
 
 - `</>` — the code mark
 - `heart` — a lacquer heart

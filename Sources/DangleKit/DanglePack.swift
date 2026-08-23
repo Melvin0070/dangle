@@ -18,11 +18,51 @@ public struct DanglePack: Codable, Equatable {
     /// Optional sound file (relative to the pack) played on dangle://bless.
     public var blessSoundPath: String?
 
+    /// How a charm is drawn. Not a plain `String` enum: an unrecognised kind
+    /// has to keep decoding, or a pack written by a newer Dangle would be
+    /// refused whole by an older one.
+    public enum Kind: RawRepresentable, Codable, Equatable, Hashable, Sendable {
+        /// A real extruded 3D shape (SceneKit).
+        case glyph3d
+        /// A gradient glass tile with the glyph on top.
+        case glass
+        /// The bare glyph, big.
+        case emoji
+        /// Written by a version that knows something this one does not.
+        /// Drawn as `glass`, which needs nothing but a glyph and colors.
+        case unrecognized(String)
+
+        public init(rawValue: String) {
+            switch rawValue {
+            case "glyph3d": self = .glyph3d
+            case "glass": self = .glass
+            case "emoji": self = .emoji
+            default: self = .unrecognized(rawValue)
+            }
+        }
+
+        public var rawValue: String {
+            switch self {
+            case .glyph3d: "glyph3d"
+            case .glass: "glass"
+            case .emoji: "emoji"
+            case .unrecognized(let raw): raw
+            }
+        }
+
+        public init(from decoder: any Decoder) throws {
+            self.init(rawValue: try decoder.singleValueContainer().decode(String.self))
+        }
+
+        public func encode(to encoder: any Encoder) throws {
+            var container = encoder.singleValueContainer()
+            try container.encode(rawValue)
+        }
+    }
+
     public struct CharmSpec: Codable, Equatable {
-        /// "glyph3d" hangs the glyph as a real extruded 3D shape (SceneKit),
-        /// "glass" hangs a gradient glass tile with a glyph, and "emoji"
-        /// hangs a bare glyph. All get a tiny twin as the middle bead.
-        public var kind: String
+        /// All kinds get a tiny twin as the middle bead.
+        public var kind: Kind
         /// The glyph: "</>" for glass, any emoji for emoji kind.
         public var glyph: String
         /// Tile side in points (glass) or glyph size (emoji). Default 96.
@@ -65,6 +105,44 @@ public struct DanglePack: Codable, Equatable {
         return try JSONDecoder().decode(DanglePack.self, from: data)
     }
 
+    /// Where a user's own pack lives. Survives replacing Dangle.app, which is
+    /// the whole point: the app is disposable, the pack is not.
+    public static var userPackURL: URL? {
+        FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("Dangle/pack.json")
+    }
+
+    /// Copies the bundled pack to Application Support the first time the app
+    /// runs, and never touches it again. Without this a pack lives only inside
+    /// the .app, so replacing the app — an update, a re-download — silently
+    /// throws away whatever it was carrying. Charms already survive this way
+    /// (`CharmStore.seedBundledCharms`); packs did not.
+    ///
+    /// Deliberately seed-once: a later version's bundled pack must never
+    /// overwrite the copy the user owns, even if the user never edited it.
+    @discardableResult
+    public static func seedBundledPack() -> Bool {
+        seedPack(from: Bundle.main.url(forResource: "pack", withExtension: "json"),
+                 to: userPackURL)
+    }
+
+    /// Split out from `seedBundledPack` so the never-overwrite promise is
+    /// testable without a real app bundle.
+    @discardableResult
+    static func seedPack(from source: URL?, to dest: URL?) -> Bool {
+        let fm = FileManager.default
+        guard let dest, let source,
+              !fm.fileExists(atPath: dest.path),
+              let data = try? Data(contentsOf: source),
+              // Only seed something the app can actually read back.
+              (try? JSONDecoder().decode(DanglePack.self, from: data)) != nil
+        else { return false }
+        try? fm.createDirectory(at: dest.deletingLastPathComponent(),
+                                withIntermediateDirectories: true)
+        return (try? data.write(to: dest, options: .atomic)) != nil
+    }
+
     /// Resolution order: $DANGLE_PACK, then Application Support, then the
     /// bundled pack, then a built-in fallback. This is what makes the app an
     /// engine: drop a pack.json into Application Support and it is yours.
@@ -74,15 +152,20 @@ public struct DanglePack: Codable, Equatable {
         if let env = ProcessInfo.processInfo.environment["DANGLE_PACK"] {
             candidates.append(URL(fileURLWithPath: env))
         }
-        if let appSupport = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
-            candidates.append(appSupport.appendingPathComponent("Dangle/pack.json"))
+        if let user = userPackURL {
+            candidates.append(user)
         }
         if let bundled = Bundle.main.url(forResource: "pack", withExtension: "json") {
             candidates.append(bundled)
         }
         for url in candidates where fm.fileExists(atPath: url.path) {
-            if let pack = try? load(from: url) {
-                return (pack, url.deletingLastPathComponent())
+            do {
+                return (try load(from: url), url.deletingLastPathComponent())
+            } catch {
+                // Falling through silently would swap someone's pack for the
+                // stock one with no clue why, so say which file and why.
+                FileHandle.standardError.write(Data(
+                    "Dangle: ignoring \(url.path) — \(error)\n".utf8))
             }
         }
         return (.fallback, nil)
@@ -90,7 +173,7 @@ public struct DanglePack: Codable, Equatable {
 
     public static let fallback = DanglePack(
         name: "Dangle",
-        charm: CharmSpec(kind: "glyph3d", glyph: "</>", size: 96,
+        charm: CharmSpec(kind: .glyph3d, glyph: "</>", size: 96,
                          gradientHexes: ["#E8590C", "#FFB86B", "#FF5E78"],
                          accentHex: "#E8590C"),
         thread: ThreadSpec(colorHex: "#FFFFFF", width: 3),

@@ -21,9 +21,9 @@ if let flagIndex = args.firstIndex(of: "--svg") {
     probe.charm.glyph = name
     probe.charm.pathData = nil
     probe.charm.size = 96
-    guard Charm3D.bespokeGlyphs.contains(name) else {
+    guard Charm3D.BespokeGlyph.allNames.contains(name) else {
         fatalError("no bespoke shape named \"\(name)\"; try one of "
-            + Charm3D.bespokeGlyphs.sorted().joined(separator: ", "))
+            + Charm3D.BespokeGlyph.allNames.sorted().joined(separator: ", "))
     }
     print(SVGPath.string(from: Charm3D.bespokePath(named: name, size: 96).cgPath))
     exit(0)
@@ -129,7 +129,7 @@ func drawCharm(_ ctx: CGContext, at center: CGPoint, angle: CGFloat) {
     ctx.rotate(by: angle)
 
     let rect = CGRect(x: -side / 2, y: -side / 2, width: side, height: side)
-    if pack.charm.kind == "glass" {
+    if pack.charm.kind == .glass {
         let path = CGPath(roundedRect: rect, cornerWidth: radius,
                           cornerHeight: radius, transform: nil)
         ctx.addPath(path)
@@ -159,14 +159,14 @@ func drawCharm(_ ctx: CGContext, at center: CGPoint, angle: CGFloat) {
         ctx.strokePath()
     }
     let glyphScale: CGFloat = switch pack.charm.kind {
-    case "emoji": 0.72
-    case "glass": 0.35
-    default: 0.8
+    case .emoji: 0.72
+    case .glass, .unrecognized: 0.35
+    case .glyph3d: 0.8
     }
     if let glyph = Rendering.glyphImage(pack.charm.glyph,
                                         fontSize: side * glyphScale,
-                                        monospaced: pack.charm.kind != "emoji",
-                                        shadowed: pack.charm.kind != "emoji") {
+                                        monospaced: pack.charm.kind != .emoji,
+                                        shadowed: pack.charm.kind != .emoji) {
         let w = CGFloat(glyph.width) / 2, h = CGFloat(glyph.height) / 2
         ctx.draw(glyph, in: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
     }
@@ -186,7 +186,7 @@ if let image = Rendering.rasterize(size: charmCard, draw: { ctx in
 }
 
 // 1b. The real 3D charm, rendered offscreen with SceneKit, mid-swing.
-if pack.charm.kind == "glyph3d", let device = MTLCreateSystemDefaultDevice() {
+if pack.charm.kind == .glyph3d, let device = MTLCreateSystemDefaultDevice() {
     let renderer = SCNRenderer(device: device, options: nil)
     let built = Charm3D.makeScene(pack: pack)
     built.scene.background.contents = NSColor(srgbRed: 0.055, green: 0.055, blue: 0.08, alpha: 1)
@@ -212,7 +212,7 @@ if let first = pack.notes.first, let note = Rendering.noteImage(first) {
 // 3. A mid-swing scene: flick the rope, run a few steps, draw thread + charm.
 let sceneSize = CGSize(width: 480, height: 460)
 let rope = VerletRope(random: { 0.7 })
-rope.hangOffset = CharmLayer.loopGap + pack.charmSize / 2
+rope.hangOffset = CharmLayer.hangOffset(forHeight: pack.charmSize)
 rope.anchorX = sceneSize.width / 2
 rope.settleInstantly()
 rope.flick()

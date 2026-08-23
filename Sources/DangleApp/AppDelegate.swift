@@ -50,9 +50,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // dangle://charm?id=<installed charm id> hangs that charm,
                 // ?glyph=<emoji> hangs a bare emoji, no query resets to the pack.
                 if let id = query("id"), !id.isEmpty {
-                    engine.setCharmOverride(id: id)
+                    engine.setCharmOverride(.installed(id: id))
                 } else if let glyph = query("glyph"), !glyph.isEmpty {
-                    engine.setCharmOverride(id: "emoji:\(glyph)")
+                    engine.setCharmOverride(.emoji(glyph))
                 } else {
                     engine.clearCharmOverride()
                 }
@@ -71,7 +71,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func statusTitle() -> String {
         let charm = engine.effectivePack.charm
         if let menuGlyph = charm.menuGlyph, !menuGlyph.isEmpty { return menuGlyph }
-        if charm.kind == "emoji" { return charm.glyph }
+        if charm.kind == .emoji { return charm.glyph }
         return charm.glyph == "</>" ? "</>" : "🧿"
     }
 
@@ -192,10 +192,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// with a charm of its own needs it).
     private func rebuildCharmMenu(_ menu: NSMenu) {
         menu.removeAllItems()
-        let override = engine.charmOverrideID
+        let override = engine.charmOverride
         let installed = CharmStore.shared.installedCharms()
         let packCharmIsBundled = installed.contains { $0.charm == engine.pack.charm }
-        let activeID = override ?? (packCharmIsBundled
+        let activeID = override?.installedID ?? (packCharmIsBundled
             ? installed.first(where: { $0.charm == engine.pack.charm })?.id
             : nil)
 
@@ -219,7 +219,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let emojiCharm = NSMenuItem(title: "Pick an Emoji…",
                                     action: #selector(pickEmoji), keyEquivalent: "")
         emojiCharm.target = self
-        emojiCharm.state = (override?.hasPrefix("emoji:") ?? false) ? .on : .off
+        emojiCharm.state = override?.isEmoji == true ? .on : .off
         menu.addItem(emojiCharm)
 
         menu.addItem(.separator())
@@ -231,7 +231,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func pickInstalledCharm(_ sender: NSMenuItem) {
         guard let id = sender.representedObject as? String else { return }
-        engine.setCharmOverride(id: id)
+        engine.setCharmOverride(.installed(id: id))
         statusItem.button?.title = statusTitle()
     }
 
@@ -291,7 +291,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if alert.runModal() == .alertFirstButtonReturn {
             let glyph = field.stringValue.trimmingCharacters(in: .whitespaces)
             if !glyph.isEmpty {
-                engine.setCharmOverride(id: "emoji:\(String(glyph.prefix(4)))")
+                engine.setCharmOverride(.emoji(String(glyph.prefix(4))))
                 statusItem.button?.title = statusTitle()
             }
         }
@@ -319,17 +319,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// and reveals it, so customizing never requires a rebuild.
     @objc private func editPack() {
         let fm = FileManager.default
-        guard let appSupport = fm.urls(for: .applicationSupportDirectory,
-                                       in: .userDomainMask).first else { return }
-        let dir = appSupport.appendingPathComponent("Dangle")
-        let dest = dir.appendingPathComponent("pack.json")
-        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
-        if !fm.fileExists(atPath: dest.path) {
-            if let bundled = Bundle.main.url(forResource: "pack", withExtension: "json"),
-               let data = try? Data(contentsOf: bundled) {
-                try? data.write(to: dest)
-            } else if let data = try? JSONEncoder().encode(engine.pack) {
-                try? data.write(to: dest)
+        guard let dest = DanglePack.userPackURL else { return }
+        // Normally already seeded at launch; this covers a build with no
+        // bundled pack at all, which falls back to the running one.
+        if !DanglePack.seedBundledPack(), !fm.fileExists(atPath: dest.path) {
+            try? fm.createDirectory(at: dest.deletingLastPathComponent(),
+                                    withIntermediateDirectories: true)
+            if let data = try? JSONEncoder().encode(engine.pack) {
+                try? data.write(to: dest, options: .atomic)
             }
         }
         NSWorkspace.shared.activateFileViewerSelecting([dest])

@@ -101,23 +101,29 @@ public final class DangleEngine: NSObject {
         set { defaults.set(newValue, forKey: Keys.autoNotes); scheduleIntervalNotes() }
     }
 
-    /// The pack with any user charm override applied. Overrides are stored as
-    /// a single id: "emoji:🍀" hangs a bare emoji, anything else names an
-    /// installed charm from the CharmStore. Cached because the render loop
-    /// reads it every frame; recomputed whenever the pack or override change.
+    /// The pack with any user charm override applied. Cached because the
+    /// render loop reads it every frame; recomputed whenever the pack or the
+    /// override changes.
     public private(set) lazy var effectivePack: DanglePack = resolveEffectivePack()
-    public var charmOverrideID: String? { defaults.string(forKey: Keys.charmID) }
+
+    public var charmOverride: CharmOverride? {
+        defaults.string(forKey: Keys.charmID).flatMap(CharmOverride.init(rawValue:))
+    }
 
     private func resolveEffectivePack() -> DanglePack {
         var p = pack
-        guard let id = defaults.string(forKey: Keys.charmID) else { return p }
-        if id.hasPrefix("emoji:") {
-            p.charm.kind = "emoji"
-            p.charm.glyph = String(id.dropFirst("emoji:".count))
+        switch charmOverride {
+        case nil:
+            break
+        case .emoji(let glyph):
+            p.charm.kind = .emoji
+            p.charm.glyph = glyph
             p.charm.size = 72
             p.charm.menuGlyph = nil
-        } else if let charm = CharmStore.shared.charm(id: id) {
-            p.charm = charm.charm
+        case .installed(let id):
+            if let charm = CharmStore.shared.charm(id: id) {
+                p.charm = charm.charm
+            }
         }
         return p
     }
@@ -267,7 +273,7 @@ public final class DangleEngine: NSObject {
     private var charmExtents = CGSize(width: 96, height: 96)
 
     private func applyCharmStyle(_ p: DanglePack) {
-        uses3D = p.charm.kind == "glyph3d"
+        uses3D = p.charm.kind == .glyph3d
         threadTopWidth = CGFloat(p.thread.width) + 1.2
         threadBottomWidth = max(1.6, CGFloat(p.thread.width) * 0.62)
         charm3D?.removeFromSuperview()
@@ -286,7 +292,7 @@ public final class DangleEngine: NSObject {
             charm.configure(pack: p)
             charmExtents = CGSize(width: p.charmSize, height: p.charmSize)
         }
-        rope.hangOffset = CharmLayer.loopGap + charmExtents.height / 2
+        rope.hangOffset = CharmLayer.hangOffset(forHeight: charmExtents.height)
         rope.charmRadius = max(40, max(charmExtents.width, charmExtents.height) * 0.8)
 
         let threadColor = NSColor(hex: p.thread.colorHex)
@@ -387,7 +393,7 @@ public final class DangleEngine: NSObject {
         linkFast=\(linkIsFast) charmActive=\(charmActiveNow)
         activityLevel=\(activityLevel) mouseNearCharm=\(mouseNearCharm)
         noteVisible=\(noteVisible) confetti=\(confetti.isActive)
-        anchorX=\(rope.anchorX) charm=\(effectivePack.charm.kind)/\(effectivePack.charm.glyph)
+        anchorX=\(rope.anchorX) charm=\(effectivePack.charm.kind.rawValue)/\(effectivePack.charm.glyph)
         ticks=\(tickCount)
         """
         try? s.write(toFile: "/tmp/dangle-debug.txt", atomically: true, encoding: .utf8)
@@ -407,14 +413,15 @@ public final class DangleEngine: NSObject {
         scheduleIntervalNotes()
     }
 
-    /// Hang an installed charm by id, or an emoji via "emoji:🍀".
-    /// Unknown ids are ignored rather than persisted as a dead override.
-    public func setCharmOverride(id: String) {
-        guard id.hasPrefix("emoji:") || CharmStore.shared.charm(id: id) != nil else {
+    /// Hang an installed charm, or a bare emoji. An override naming a charm
+    /// that is not installed is ignored rather than persisted as a dead one.
+    public func setCharmOverride(_ override: CharmOverride) {
+        if case .installed(let id) = override,
+           CharmStore.shared.charm(id: id) == nil {
             return
         }
         switchCharm {
-            self.defaults.set(id, forKey: Keys.charmID)
+            self.defaults.set(override.rawValue, forKey: Keys.charmID)
             self.effectivePack = self.resolveEffectivePack()
             self.applyCharmStyle(self.effectivePack)
         }
@@ -474,12 +481,16 @@ public final class DangleEngine: NSObject {
     /// The charm's own notes take over while it hangs; a hand-picked emoji
     /// gets the generic set; otherwise the pack's.
     private var activeNotes: [String] {
-        guard let id = charmOverrideID else { return pack.notes }
-        if id.hasPrefix("emoji:") { return Self.genericEmojiNotes }
-        if let notes = CharmStore.shared.charm(id: id)?.notes, !notes.isEmpty {
+        switch charmOverride {
+        case nil:
+            return pack.notes
+        case .emoji:
+            return Self.genericEmojiNotes
+        case .installed(let id):
+            guard let notes = CharmStore.shared.charm(id: id)?.notes,
+                  !notes.isEmpty else { return pack.notes }
             return notes
         }
-        return pack.notes
     }
 
     public func showNextNote() {

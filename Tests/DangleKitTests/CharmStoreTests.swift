@@ -30,7 +30,7 @@ import Foundation
         defer { try? FileManager.default.removeItem(at: dir) }
         let charm = Charm(
             id: "heart", name: "Heart",
-            charm: .init(kind: "glyph3d", glyph: "heart", size: 96,
+            charm: .init(kind: .glyph3d, glyph: "heart", size: 96,
                          gradientHexes: ["#C81E3C"], accentHex: "#C81E3C",
                          menuGlyph: "❤️"))
         try store.install(charm)
@@ -74,7 +74,7 @@ import Foundation
         defer { try? FileManager.default.removeItem(at: dir) }
         for id in ["../escape", "a/b", "", "UPPER", "sp ace", String(repeating: "x", count: 65)] {
             let charm = Charm(id: id, name: "Evil",
-                              charm: .init(kind: "emoji", glyph: "😈", size: 72,
+                              charm: .init(kind: .emoji, glyph: "😈", size: 72,
                                            gradientHexes: nil, accentHex: "#000000",
                                            menuGlyph: nil))
             #expect(throws: (any Error).self) { try store.install(charm) }

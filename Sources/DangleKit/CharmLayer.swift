@@ -16,7 +16,11 @@ public final class CharmLayer: CALayer {
     private var side: CGFloat = 96
 
     /// Distance from the rope end (the loop) to the charm's visual center.
-    public var hangOffset: CGFloat { Self.loopGap + side / 2 }
+    /// Static because callers need it for 3D charms too, which are not
+    /// CharmLayers and have their own measured height.
+    public static func hangOffset(forHeight height: CGFloat) -> CGFloat {
+        loopGap + height / 2
+    }
 
     public convenience init(pack: DanglePack) {
         self.init()
@@ -25,7 +29,7 @@ public final class CharmLayer: CALayer {
 
     public func configure(pack: DanglePack) {
         side = pack.charmSize
-        isGlass = pack.charm.kind != "emoji"
+        isGlass = pack.charm.kind != .emoji
         sublayers?.forEach { $0.removeFromSuperlayer() }
         removeAllAnimations()
 
@@ -137,10 +141,10 @@ public final class CharmLayer: CALayer {
     /// clutter rather than a charm detail.
     public static func bead(pack: DanglePack) -> CALayer {
         let bead = CALayer()
-        if pack.charm.kind == "emoji" {
+        if pack.charm.kind == .emoji {
             return bead
         }
-        if pack.charm.kind == "glyph3d" {
+        if pack.charm.kind == .glyph3d {
             // A little chrome ball, same metal as the glyph.
             let s: CGFloat = 11
             let ball = CAGradientLayer()

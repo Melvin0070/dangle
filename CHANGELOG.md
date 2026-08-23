@@ -1,5 +1,37 @@
 # Changelog
 
+## Unreleased
+
+- **Your pack now survives replacing the app.** On first run Dangle copies the
+  bundled pack to `~/Library/Application Support/Dangle/pack.json` and never
+  writes there again — not on update, not if you never edited it. Packs used
+  to live only inside `Dangle.app`, so installing a new build silently threw
+  away whatever the old one was carrying. Charms already worked this way;
+  packs now do too. The trade: default-pack improvements no longer reach an
+  existing install, and deleting your copy takes the new one.
+- A pack that fails to parse now says so on stderr, naming the file and the
+  reason, instead of quietly falling back to the stock pack.
+- `charm.kind` is a real type now (`DanglePack.Kind`) instead of a bare
+  string compared with `==` in a dozen places. The JSON is unchanged, and a
+  kind written by a newer Dangle decodes as `unrecognized` and hangs as glass
+  rather than taking the whole pack down.
+- The charm override — an installed charm or a hand-picked emoji — is a
+  `CharmOverride` enum instead of a `"emoji:🍀"` string parsed with
+  `hasPrefix` at four call sites. The stored form is unchanged, so an
+  override picked by an earlier build still resolves.
+- Built-in 3D shapes are one `Charm3D.BespokeGlyph` case each, owning their
+  names, geometry and finish, instead of a name set and two parallel switches
+  kept in sync by hand.
+- `fillHex`, `metalness`, `roughness`, `depth` and `chamfer` now apply to the
+  built-in shapes too, not only to `pathData` charms — a heart with a
+  `fillHex` used to render the built-in red and silently ignore it. Their
+  built-in values are defaults now, so nothing that ships changes: no charm
+  in the catalog states any of these.
+- Frozen-schema tests pin the 1.0 pack and charm formats, so a future change
+  that would stop an already-given pack from loading fails CI instead of
+  reaching someone's machine. Unknown fields stay ignored, so a pack written
+  by a newer Dangle still loads on an older one.
+
 ## 0.4.0
 
 - **A charm can carry its own shape.** Give it `pathData` — an SVG `d`
